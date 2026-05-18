@@ -38,6 +38,8 @@
       audio.preload = "auto";
       audio.loop = state.looping.has(song.id);
       audio.volume = songVolume(song);
+      audio.addEventListener("loadedmetadata", () => updateMixer(song));
+      audio.addEventListener("timeupdate", () => updateMixer(song));
       audio.addEventListener("ended", syncStatus);
       audioById.set(song.id, audio);
     }
@@ -148,6 +150,13 @@
     });
   }
 
+  function formatTime(seconds) {
+    if (!Number.isFinite(seconds) || seconds < 0) return "0:00";
+    const minutes = Math.floor(seconds / 60);
+    const wholeSeconds = Math.floor(seconds % 60).toString().padStart(2, "0");
+    return `${minutes}:${wholeSeconds}`;
+  }
+
   function ensureMixer(song) {
     if (mixerById.has(song.id)) return mixerById.get(song.id);
 
@@ -179,6 +188,11 @@
     const percent = Math.round(audio.volume * 100);
     row.querySelector(".mixer-volume").value = String(percent);
     row.querySelector(".mixer-output").textContent = `${percent}%`;
+
+    const duration = Number.isFinite(audio.duration) ? audio.duration : 0;
+    const progress = duration ? (audio.currentTime / duration) * 100 : 0;
+    row.querySelector(".duration-bar").value = Math.min(100, Math.max(0, progress));
+    row.querySelector(".duration-time").textContent = `${formatTime(audio.currentTime)} / ${formatTime(duration)}`;
   }
 
   function removeMixer(song) {
