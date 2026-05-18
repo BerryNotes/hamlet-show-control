@@ -175,11 +175,12 @@ output {
 .song-actions {
   display: grid;
   grid-template-columns: repeat(5, minmax(78px, 1fr));
-  gap: 10px;
+  gap: 8px;
 }
 
 .song-actions button {
   min-height: 42px;
+  padding: 0 8px;
   font-weight: 900;
 }
 
@@ -257,7 +258,7 @@ output {
   text-transform: uppercase;
 }
 
-@media (max-width: 680px) {
+@media (max-width: 820px) {
   .topbar,
   .page,
   .controls,
@@ -275,6 +276,36 @@ output {
   }
 
   .song-actions {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .song-actions button {
+    min-height: 44px;
+    padding: 0 6px;
+    font-size: 0.86rem;
+  }
+
+  .mixer {
+    position: static;
+  }
+}
+
+@media (max-width: 380px) {
+  .page {
+    width: min(100% - 16px, 1260px);
+  }
+
+  .song-row,
+  .controls,
+  .mixer {
+    padding: 10px;
+  }
+
+  .song-actions {
+    gap: 6px;
+  }
+
+  .song-actions button {
+    font-size: 0.8rem;
   }
 }
