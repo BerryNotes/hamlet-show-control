@@ -9,9 +9,9 @@ window.SHOW_CUES = [
         track: "Overture",
         file: "assets/audio/overture.mp3",
         volume: 80,
-        fadeIn: 0,
+        fadeIn: 4,
         fadeOut: 6,
-        loop: true
+        loop: false
       },
       {
         id: "2",
@@ -20,9 +20,9 @@ window.SHOW_CUES = [
         track: "Cricket Chirps",
         file: "assets/audio/cricket-chirps.mp3",
         volume: 80,
-        fadeIn: 0,
+        fadeIn: 4,
         fadeOut: 5,
-        loop: true
+        loop: false
       },
       {
         id: "3",
@@ -31,9 +31,9 @@ window.SHOW_CUES = [
         track: "Ghost Noise",
         file: "assets/audio/ghost-noise.mp3",
         volume: 80,
-        fadeIn: 0,
+        fadeIn: 4,
         fadeOut: 5,
-        loop: true
+        loop: false
       },
       {
         id: "4",
@@ -42,9 +42,9 @@ window.SHOW_CUES = [
         track: "Midnight Bells",
         file: "assets/audio/midnight-bells.mp3",
         volume: 80,
-        fadeIn: 0,
+        fadeIn: 4,
         fadeOut: 6,
-        loop: true
+        loop: false
       }
     ]
   }

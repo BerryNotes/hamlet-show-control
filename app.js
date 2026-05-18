@@ -6,7 +6,8 @@
 
   const state = {
     master: 0.85,
-    warning: ""
+    warning: "",
+    looping: new Set()
   };
 
   const els = {
@@ -31,7 +32,7 @@
     if (!audioById.has(song.id)) {
       const audio = new Audio(song.file);
       audio.preload = "auto";
-      audio.loop = Boolean(song.loop);
+      audio.loop = state.looping.has(song.id);
       audio.volume = songVolume(song);
       audio.addEventListener("ended", syncStatus);
       audioById.set(song.id, audio);
@@ -63,12 +64,30 @@
     const audio = getAudio(song);
     audio.pause();
     audio.currentTime = 0;
-    audio.loop = Boolean(song.loop);
+    audio.loop = state.looping.has(song.id);
     audio.volume = songVolume(song);
 
     try {
       await audio.play();
       state.warning = "";
+    } catch (error) {
+      state.warning = `Could not play ${songName(song)}`;
+    }
+
+    syncStatus();
+  }
+
+  async function fadeInSong(song) {
+    const audio = getAudio(song);
+    audio.pause();
+    audio.currentTime = 0;
+    audio.loop = state.looping.has(song.id);
+    audio.volume = 0;
+
+    try {
+      await audio.play();
+      state.warning = "";
+      ramp(audio, 0, songVolume(song), song.fadeIn || 4);
     } catch (error) {
       state.warning = `Could not play ${songName(song)}`;
     }
@@ -136,6 +155,17 @@
       row.querySelector(".song-title").textContent = songName(song);
       row.querySelector(".song-note").textContent = song.moment;
       row.querySelector(".play-button").addEventListener("click", () => playSong(song));
+      row.querySelector(".fade-in-button").addEventListener("click", () => fadeInSong(song));
+      row.querySelector(".loop-button").addEventListener("click", (event) => {
+        const shouldLoop = !state.looping.has(song.id);
+        if (shouldLoop) state.looping.add(song.id);
+        else state.looping.delete(song.id);
+
+        const audio = audioById.get(song.id);
+        if (audio) audio.loop = shouldLoop;
+
+        event.currentTarget.setAttribute("aria-pressed", String(shouldLoop));
+      });
       row.querySelector(".fade-button").addEventListener("click", () => fadeSong(song));
       row.querySelector(".stop-button").addEventListener("click", () => {
         stopSong(song);

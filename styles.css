@@ -178,7 +178,7 @@ output {
 
 .song-actions {
   display: grid;
-  grid-template-columns: repeat(3, minmax(96px, 1fr));
+  grid-template-columns: repeat(5, minmax(78px, 1fr));
   gap: 10px;
 }
 
@@ -193,8 +193,18 @@ output {
   color: #07140c;
 }
 
+.fade-in-button {
+  background: #22372c;
+}
+
 .fade-button {
   background: #2d3540;
+}
+
+.loop-button[aria-pressed="true"] {
+  border-color: var(--gold);
+  background: #3d321d;
+  color: #fff3cf;
 }
 
 .stop-button {
