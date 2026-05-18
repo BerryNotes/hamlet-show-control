@@ -8,7 +8,8 @@
   const state = {
     master: 0.85,
     warning: "",
-    looping: new Set()
+    looping: new Set(),
+    levels: new Map()
   };
 
   const els = {
@@ -28,8 +29,23 @@
     return song.track || song.action || song.id;
   }
 
-  function songVolume(song) {
-    return ((song.volume ?? 80) / 100) * state.master;
+  function defaultSongLevel(song) {
+    return (song.volume ?? 80) / 100;
+  }
+
+  function songLevel(song) {
+    return state.levels.get(song.id) ?? defaultSongLevel(song);
+  }
+
+  function applyOutputVolume(song) {
+    const audio = audioById.get(song.id);
+    if (audio) audio.volume = Math.min(1, Math.max(0, songLevel(song) * state.master));
+  }
+
+  function setSongLevel(song, level) {
+    state.levels.set(song.id, Math.min(1, Math.max(0, level)));
+    applyOutputVolume(song);
+    updateMixer(song);
   }
 
   function getAudio(song) {
@@ -37,21 +53,20 @@
       const audio = new Audio(song.file);
       audio.preload = "auto";
       audio.loop = state.looping.has(song.id);
-      audio.volume = songVolume(song);
       audio.addEventListener("loadedmetadata", () => updateMixer(song));
       audio.addEventListener("timeupdate", () => updateMixer(song));
       audio.addEventListener("ended", syncStatus);
       audioById.set(song.id, audio);
+      applyOutputVolume(song);
     }
 
     return audioById.get(song.id);
   }
 
-  function ramp(audio, from, to, seconds, onUpdate, done) {
+  function ramp(from, to, seconds, onUpdate, done) {
     const duration = Math.max(0, seconds || 0) * 1000;
     if (!duration) {
-      audio.volume = to;
-      if (onUpdate) onUpdate();
+      if (onUpdate) onUpdate(to);
       if (done) done();
       return;
     }
@@ -59,8 +74,8 @@
     const started = performance.now();
     const step = (now) => {
       const progress = Math.min(1, (now - started) / duration);
-      audio.volume = from + (to - from) * progress;
-      if (onUpdate) onUpdate();
+      const value = from + (to - from) * progress;
+      if (onUpdate) onUpdate(value);
       if (progress < 1) requestAnimationFrame(step);
       else if (done) done();
     };
@@ -73,7 +88,7 @@
     audio.pause();
     audio.currentTime = 0;
     audio.loop = state.looping.has(song.id);
-    audio.volume = songVolume(song);
+    setSongLevel(song, defaultSongLevel(song));
     ensureMixer(song);
 
     try {
@@ -91,14 +106,14 @@
     audio.pause();
     audio.currentTime = 0;
     audio.loop = state.looping.has(song.id);
-    audio.volume = 0;
+    setSongLevel(song, 0);
     ensureMixer(song);
     updateMixer(song);
 
     try {
       await audio.play();
       state.warning = "";
-      ramp(audio, 0, songVolume(song), song.fadeIn || 4, () => updateMixer(song), syncStatus);
+      ramp(0, defaultSongLevel(song), song.fadeIn || 4, (level) => setSongLevel(song, level), syncStatus);
     } catch (error) {
       state.warning = `Could not play ${songName(song)}`;
     }
@@ -111,10 +126,11 @@
     if (!audio || audio.paused) return;
 
     ensureMixer(song);
-    ramp(audio, audio.volume, 0, song.fadeOut ?? 5, () => updateMixer(song), () => {
+    ramp(songLevel(song), 0, song.fadeOut ?? 5, (level) => setSongLevel(song, level), () => {
       audio.pause();
       audio.currentTime = 0;
-      audio.volume = songVolume(song);
+      state.levels.delete(song.id);
+      applyOutputVolume(song);
       removeMixer(song);
       syncStatus();
     });
@@ -125,7 +141,8 @@
     if (!audio) return;
     audio.pause();
     audio.currentTime = 0;
-    audio.volume = songVolume(song);
+    state.levels.delete(song.id);
+    applyOutputVolume(song);
     removeMixer(song);
   }
 
@@ -144,7 +161,7 @@
     songs.forEach((song) => {
       const audio = audioById.get(song.id);
       if (audio && !audio.paused) {
-        audio.volume = songVolume(song);
+        applyOutputVolume(song);
         updateMixer(song);
       }
     });
@@ -169,7 +186,7 @@
     volume.addEventListener("input", () => {
       const audio = audioById.get(song.id);
       if (!audio) return;
-      audio.volume = Number(volume.value) / 100;
+      setSongLevel(song, Number(volume.value) / 100);
       output.textContent = `${volume.value}%`;
     });
 
@@ -185,7 +202,7 @@
     const audio = audioById.get(song.id);
     if (!row || !audio) return;
 
-    const percent = Math.round(audio.volume * 100);
+    const percent = Math.round(songLevel(song) * 100);
     row.querySelector(".mixer-volume").value = String(percent);
     row.querySelector(".mixer-output").textContent = `${percent}%`;
 
