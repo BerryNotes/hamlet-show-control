@@ -213,7 +213,6 @@
       const row = fragment.querySelector(".song-row");
 
       row.querySelector(".song-title").textContent = songName(song);
-      row.querySelector(".song-note").textContent = song.moment;
       row.querySelector(".play-button").addEventListener("click", () => playSong(song));
       row.querySelector(".fade-in-button").addEventListener("click", () => fadeInSong(song));
       row.querySelector(".loop-button").addEventListener("click", (event) => {

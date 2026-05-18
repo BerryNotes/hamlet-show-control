@@ -45,6 +45,17 @@ window.SHOW_CUES = [
         fadeIn: 4,
         fadeOut: 6,
         loop: false
+      },
+      {
+        id: "5",
+        moment: "Use for court scenes and formal palace moments.",
+        action: "Play court song",
+        track: "Court Song",
+        file: "assets/audio/court-song.mp3",
+        volume: 80,
+        fadeIn: 4,
+        fadeOut: 6,
+        loop: false
       }
     ]
   }

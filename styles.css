@@ -156,10 +156,10 @@ output {
 .song-row {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  gap: 14px;
+  gap: 12px;
   align-items: center;
-  min-height: 94px;
-  padding: 14px;
+  min-height: 64px;
+  padding: 10px 12px;
 }
 
 .song-row.is-playing {
@@ -169,15 +169,7 @@ output {
 
 .song-info strong {
   display: block;
-  margin-bottom: 6px;
-  font-size: clamp(1.25rem, 4vw, 1.8rem);
-}
-
-.song-info small {
-  display: block;
-  color: var(--muted);
-  font-size: 0.98rem;
-  line-height: 1.35;
+  font-size: clamp(1.05rem, 3vw, 1.35rem);
 }
 
 .song-actions {
@@ -187,7 +179,7 @@ output {
 }
 
 .song-actions button {
-  min-height: 58px;
+  min-height: 42px;
   font-weight: 900;
 }
 
