@@ -62,6 +62,17 @@ The website cue data has been updated in `show-data.js` with a first-pass cue li
 
 The person running the show should not need to understand fades, loops, file names, or sound terminology. The live page should stay in "Next cue / GO / Stop" language. Any complicated decisions belong in this document or inside `show-data.js`, not on the main screen.
 
+## Audio Added So Far
+
+These files are now in `assets/audio` and connected to likely cues:
+
+- `cricket-chirps.mp3`: platform night crickets
+- `ghost-noise.mp3`: Ghost appearances and supernatural pressure
+- `midnight-bells.mp3`: transitional, chapel, Ophelia, graveyard, and funeral placeholder
+- `overture.mp3`: opening, court, intermission, duel, and ending placeholder
+
+Several specific effects still point to placeholder filenames until those sounds are created, including rooster crow, harp, arras kill, door break, tray clatter, sword touches, and grave digging.
+
 ## Next Decisions
 
 - Decide whether Ophelia has original melodies, traditional folk-like melodies, or spoken-song fragments.
