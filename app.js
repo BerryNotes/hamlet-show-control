@@ -163,7 +163,12 @@
   }
 
   function loadSounds() {
-    songs.forEach((song) => getAudio(song).load());
+    songs.forEach((song) => {
+      const audio = getAudio(song);
+      if (!audio.paused) return;
+      if (audio.readyState >= HTMLMediaElement.HAVE_ENOUGH_DATA) return;
+      audio.load();
+    });
     els.load.textContent = "Sounds loaded";
   }
 
