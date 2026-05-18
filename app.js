@@ -9,7 +9,8 @@
     master: 0.85,
     warning: "",
     looping: new Set(),
-    levels: new Map()
+    levels: new Map(),
+    seekTargets: new Map()
   };
 
   const els = {
@@ -55,6 +56,10 @@
       audio.loop = state.looping.has(song.id);
       audio.addEventListener("loadedmetadata", () => updateMixer(song));
       audio.addEventListener("timeupdate", () => updateMixer(song));
+      audio.addEventListener("seeked", () => {
+        state.seekTargets.delete(song.id);
+        updateMixer(song);
+      });
       audio.addEventListener("ended", syncStatus);
       audioById.set(song.id, audio);
       applyOutputVolume(song);
@@ -85,6 +90,7 @@
 
   async function playSong(song) {
     const audio = getAudio(song);
+    state.seekTargets.delete(song.id);
     audio.pause();
     audio.currentTime = 0;
     audio.loop = state.looping.has(song.id);
@@ -103,6 +109,7 @@
 
   async function fadeInSong(song) {
     const audio = getAudio(song);
+    state.seekTargets.delete(song.id);
     audio.pause();
     audio.currentTime = 0;
     audio.loop = state.looping.has(song.id);
@@ -139,6 +146,7 @@
   function stopSong(song) {
     const audio = audioById.get(song.id);
     if (!audio) return;
+    state.seekTargets.delete(song.id);
     audio.pause();
     audio.currentTime = 0;
     state.levels.delete(song.id);
@@ -192,14 +200,49 @@
       durationBar.setAttribute("aria-valuenow", String(Math.round(clamped * 1000)));
     };
 
-    const seekToRatio = (ratio) => {
+    const showSeekTime = (seconds) => {
       const audio = audioById.get(song.id);
       if (!audio || !Number.isFinite(audio.duration) || audio.duration <= 0) return;
 
-      const clamped = Math.min(1, Math.max(0, ratio));
-      setDurationBar(clamped);
-      audio.currentTime = clamped * audio.duration;
-      row.querySelector(".duration-time").textContent = `${formatTime(audio.currentTime)} / ${formatTime(audio.duration)}`;
+      const clampedSeconds = Math.min(audio.duration, Math.max(0, seconds));
+      setDurationBar(clampedSeconds / audio.duration);
+      row.dataset.seekTarget = String(clampedSeconds);
+      row.querySelector(".duration-time").textContent = `${formatTime(clampedSeconds)} / ${formatTime(audio.duration)}`;
+    };
+
+    const applySeekTime = (seconds) => {
+      const audio = audioById.get(song.id);
+      if (!audio || !Number.isFinite(audio.duration) || audio.duration <= 0) return;
+
+      const target = Math.min(audio.duration, Math.max(0, seconds));
+      state.seekTargets.set(song.id, target);
+      showSeekTime(target);
+
+      const forceSeek = () => {
+        if (state.seekTargets.get(song.id) !== target) return;
+        try {
+          audio.currentTime = target;
+        } catch (error) {
+          state.warning = `Could not seek ${songName(song)}`;
+        }
+      };
+
+      forceSeek();
+      setTimeout(forceSeek, 80);
+      setTimeout(forceSeek, 250);
+      setTimeout(() => updateMixer(song), 350);
+      setTimeout(() => {
+        if (state.seekTargets.get(song.id) === target && Math.abs(audio.currentTime - target) < 1.5) {
+          state.seekTargets.delete(song.id);
+          updateMixer(song);
+        }
+      }, 1000);
+    };
+
+    const seekToRatio = (ratio) => {
+      const audio = audioById.get(song.id);
+      if (!audio || !Number.isFinite(audio.duration) || audio.duration <= 0) return;
+      showSeekTime(Math.min(1, Math.max(0, ratio)) * audio.duration);
     };
 
     const seekToPointer = (event) => {
@@ -221,6 +264,8 @@
     });
 
     durationBar.addEventListener("pointerup", (event) => {
+      const target = Number(row.dataset.seekTarget);
+      if (Number.isFinite(target)) applySeekTime(target);
       row.dataset.seeking = "false";
       if (durationBar.hasPointerCapture(event.pointerId)) durationBar.releasePointerCapture(event.pointerId);
       updateMixer(song);
@@ -238,14 +283,12 @@
 
       if (event.key === "ArrowLeft") {
         event.preventDefault();
-        audio.currentTime = Math.max(0, audio.currentTime - step);
-        updateMixer(song);
+        applySeekTime(Math.max(0, audio.currentTime - step));
       }
 
       if (event.key === "ArrowRight") {
         event.preventDefault();
-        audio.currentTime = Math.min(audio.duration, audio.currentTime + step);
-        updateMixer(song);
+        applySeekTime(Math.min(audio.duration, audio.currentTime + step));
       }
     });
 
@@ -273,14 +316,16 @@
     row.querySelector(".mixer-output").textContent = `${percent}%`;
 
     const duration = Number.isFinite(audio.duration) ? audio.duration : 0;
-    const progress = duration ? (audio.currentTime / duration) * 1000 : 0;
+    const target = state.seekTargets.get(song.id);
+    const displayTime = Number.isFinite(target) ? target : audio.currentTime;
+    const progress = duration ? (displayTime / duration) * 1000 : 0;
     const durationBar = row.querySelector(".duration-bar");
     if (row.dataset.seeking !== "true") {
       const clampedProgress = Math.min(1000, Math.max(0, progress));
       durationBar.style.setProperty("--progress", `${clampedProgress / 10}%`);
       durationBar.setAttribute("aria-valuenow", String(Math.round(clampedProgress)));
     }
-    row.querySelector(".duration-time").textContent = `${formatTime(audio.currentTime)} / ${formatTime(duration)}`;
+    row.querySelector(".duration-time").textContent = `${formatTime(displayTime)} / ${formatTime(duration)}`;
   }
 
   function removeMixer(song) {
@@ -289,6 +334,7 @@
 
     row.remove();
     mixerById.delete(song.id);
+    state.seekTargets.delete(song.id);
     els.emptyMixer.hidden = mixerById.size > 0;
   }
 
