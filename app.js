@@ -179,10 +179,18 @@
 
     const fragment = els.mixerTemplate.content.cloneNode(true);
     const row = fragment.querySelector(".mixer-row");
+    const durationBar = row.querySelector(".duration-bar");
     const volume = row.querySelector(".mixer-volume");
     const output = row.querySelector(".mixer-output");
 
     row.querySelector(".mixer-title").textContent = songName(song);
+    durationBar.addEventListener("input", () => {
+      const audio = audioById.get(song.id);
+      if (!audio || !Number.isFinite(audio.duration) || audio.duration <= 0) return;
+      audio.currentTime = (Number(durationBar.value) / 1000) * audio.duration;
+      updateMixer(song);
+    });
+
     volume.addEventListener("input", () => {
       const audio = audioById.get(song.id);
       if (!audio) return;
@@ -207,8 +215,8 @@
     row.querySelector(".mixer-output").textContent = `${percent}%`;
 
     const duration = Number.isFinite(audio.duration) ? audio.duration : 0;
-    const progress = duration ? (audio.currentTime / duration) * 100 : 0;
-    row.querySelector(".duration-bar").value = Math.min(100, Math.max(0, progress));
+    const progress = duration ? (audio.currentTime / duration) * 1000 : 0;
+    row.querySelector(".duration-bar").value = Math.min(1000, Math.max(0, progress));
     row.querySelector(".duration-time").textContent = `${formatTime(audio.currentTime)} / ${formatTime(duration)}`;
   }
 

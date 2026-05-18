@@ -56,6 +56,17 @@ window.SHOW_CUES = [
         fadeIn: 8,
         fadeOut: 6,
         loop: false
+      },
+      {
+        id: "6",
+        moment: "Use for Ophelia moments.",
+        action: "Play Ophelia",
+        track: "Ophelia",
+        file: "assets/audio/ophelia.mp3",
+        volume: 80,
+        fadeIn: 8,
+        fadeOut: 6,
+        loop: false
       }
     ]
   }
