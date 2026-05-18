@@ -221,9 +221,9 @@
     });
 
     durationBar.addEventListener("pointerup", (event) => {
-      if (row.dataset.seeking === "true") seekToPointer(event);
       row.dataset.seeking = "false";
       if (durationBar.hasPointerCapture(event.pointerId)) durationBar.releasePointerCapture(event.pointerId);
+      updateMixer(song);
     });
 
     durationBar.addEventListener("pointercancel", () => {
