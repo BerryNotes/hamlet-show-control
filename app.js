@@ -64,12 +64,11 @@
     audio.pause();
     audio.currentTime = 0;
     audio.loop = Boolean(song.loop);
-    audio.volume = 0;
+    audio.volume = songVolume(song);
 
     try {
       await audio.play();
       state.warning = "";
-      ramp(audio, 0, songVolume(song), song.fadeIn ?? 1);
     } catch (error) {
       state.warning = `Could not play ${songName(song)}`;
     }
@@ -163,5 +162,6 @@
   });
 
   renderSongs();
+  loadSounds();
   syncStatus();
 })();
