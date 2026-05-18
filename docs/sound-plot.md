@@ -71,7 +71,9 @@ These files are now in `assets/audio` and connected to likely cues:
 - `midnight-bells.mp3`: transitional, chapel, Ophelia, graveyard, and funeral placeholder
 - `overture.mp3`: opening, court, intermission, duel, and ending placeholder
 
-Several specific effects still point to placeholder filenames until those sounds are created, including rooster crow, harp, arras kill, door break, tray clatter, sword touches, and grave digging.
+For now, the live website only shows these four files. The fuller sound plot can come back once more actual tracks exist.
+
+Several specific effects still need to be created later, including rooster crow, harp, arras kill, door break, tray clatter, sword touches, and grave digging.
 
 ## Next Decisions
 
