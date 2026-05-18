@@ -184,6 +184,43 @@
     const output = row.querySelector(".mixer-output");
 
     row.querySelector(".mixer-title").textContent = songName(song);
+
+    const seekToPointer = (event) => {
+      const audio = audioById.get(song.id);
+      if (!audio || !Number.isFinite(audio.duration) || audio.duration <= 0) return;
+
+      const rect = durationBar.getBoundingClientRect();
+      if (!rect.width) return;
+      const ratio = Math.min(1, Math.max(0, (event.clientX - rect.left) / rect.width));
+      durationBar.value = String(Math.round(ratio * 1000));
+      durationBar.style.setProperty("--progress", `${ratio * 100}%`);
+      audio.currentTime = ratio * audio.duration;
+      row.querySelector(".duration-time").textContent = `${formatTime(audio.currentTime)} / ${formatTime(audio.duration)}`;
+    };
+
+    durationBar.addEventListener("pointerdown", (event) => {
+      event.preventDefault();
+      row.dataset.seeking = "true";
+      durationBar.setPointerCapture(event.pointerId);
+      seekToPointer(event);
+    });
+
+    durationBar.addEventListener("pointermove", (event) => {
+      if (row.dataset.seeking !== "true") return;
+      seekToPointer(event);
+    });
+
+    durationBar.addEventListener("pointerup", (event) => {
+      if (row.dataset.seeking === "true") seekToPointer(event);
+      row.dataset.seeking = "false";
+      if (durationBar.hasPointerCapture(event.pointerId)) durationBar.releasePointerCapture(event.pointerId);
+    });
+
+    durationBar.addEventListener("pointercancel", () => {
+      row.dataset.seeking = "false";
+      updateMixer(song);
+    });
+
     durationBar.addEventListener("input", () => {
       const audio = audioById.get(song.id);
       if (!audio || !Number.isFinite(audio.duration) || audio.duration <= 0) return;
@@ -216,7 +253,12 @@
 
     const duration = Number.isFinite(audio.duration) ? audio.duration : 0;
     const progress = duration ? (audio.currentTime / duration) * 1000 : 0;
-    row.querySelector(".duration-bar").value = Math.min(1000, Math.max(0, progress));
+    const durationBar = row.querySelector(".duration-bar");
+    if (row.dataset.seeking !== "true") {
+      const clampedProgress = Math.min(1000, Math.max(0, progress));
+      durationBar.value = clampedProgress;
+      durationBar.style.setProperty("--progress", `${clampedProgress / 10}%`);
+    }
     row.querySelector(".duration-time").textContent = `${formatTime(audio.currentTime)} / ${formatTime(duration)}`;
   }
 

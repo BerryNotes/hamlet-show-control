@@ -258,12 +258,13 @@ output {
   background: transparent;
   cursor: pointer;
   accent-color: var(--gold);
+  touch-action: none;
 }
 
 .duration-bar::-webkit-slider-runnable-track {
   height: 10px;
   border-radius: 999px;
-  background: #2b343d;
+  background: linear-gradient(to right, var(--gold) 0 var(--progress, 0%), #2b343d var(--progress, 0%) 100%);
 }
 
 .duration-bar::-webkit-slider-thumb {
