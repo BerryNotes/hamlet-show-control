@@ -73,6 +73,8 @@ These files are now in `assets/audio` and connected to likely cues:
 
 For now, the live website only shows these four files. The fuller sound plot can come back once more actual tracks exist.
 
+The project copies of these files were loudness-normalized to roughly the same perceived volume. The original files in Downloads were not changed.
+
 Several specific effects still need to be created later, including rooster crow, harp, arras kill, door break, tray clatter, sword touches, and grave digging.
 
 ## Next Decisions

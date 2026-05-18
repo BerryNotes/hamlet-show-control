@@ -138,6 +138,10 @@
       row.querySelector(".song-note").textContent = song.moment;
       row.querySelector(".play-button").addEventListener("click", () => playSong(song));
       row.querySelector(".fade-button").addEventListener("click", () => fadeSong(song));
+      row.querySelector(".stop-button").addEventListener("click", () => {
+        stopSong(song);
+        syncStatus();
+      });
 
       rowById.set(song.id, row);
       els.list.append(fragment);

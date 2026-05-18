@@ -177,12 +177,12 @@ output {
 }
 
 .song-actions {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(96px, 1fr));
   gap: 10px;
 }
 
 .song-actions button {
-  min-width: 118px;
   min-height: 58px;
   font-weight: 900;
 }
@@ -197,6 +197,11 @@ output {
   background: #2d3540;
 }
 
+.stop-button {
+  border-color: #ff9c9c;
+  background: #3a2528;
+}
+
 @media (max-width: 680px) {
   .topbar,
   .controls,
@@ -209,13 +214,11 @@ output {
     display: grid;
   }
 
-  .stop-all,
-  .song-actions button {
+  .stop-all {
     width: 100%;
   }
 
   .song-actions {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: 1fr;
   }
 }
