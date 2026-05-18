@@ -3,57 +3,47 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Hamlet Sound Cues</title>
+    <title>Hamlet Music Board</title>
     <link rel="stylesheet" href="styles.css">
   </head>
   <body>
     <header class="topbar">
       <div>
         <p class="eyebrow">Hamlet</p>
-        <h1>Sound Cues</h1>
+        <h1>Music Board</h1>
       </div>
-      <button id="panicStop" class="panic" type="button">STOP ALL</button>
+      <button id="stopAll" class="stop-all" type="button">STOP ALL</button>
     </header>
 
     <main class="page">
-      <section class="now-next" aria-label="Current cue status">
-        <article>
-          <span>Now playing</span>
-          <strong id="playingCue">Nothing</strong>
-        </article>
-        <article class="next-card">
-          <span>Next cue</span>
-          <strong id="standbyCue">No cue selected</strong>
-          <p id="standbyMoment"></p>
-        </article>
+      <section class="status" aria-label="Playback status">
+        <span>Now playing</span>
+        <strong id="nowPlaying">Nothing</strong>
       </section>
 
-      <section class="go-zone" aria-label="Cue controls">
-        <button id="previousCue" class="step-button" type="button">Back</button>
-        <button id="goButton" class="go-button" type="button">GO</button>
-        <button id="nextCue" class="step-button" type="button">Skip</button>
-      </section>
-
-      <section class="simple-controls" aria-label="Sound controls">
-        <button id="preloadAll" type="button">Load sounds</button>
+      <section class="controls" aria-label="Sound controls">
+        <button id="loadSounds" type="button">Load sounds</button>
         <label>
-          <span>Sound level</span>
+          <span>Volume</span>
           <input id="masterVolume" type="range" min="0" max="100" value="85">
           <output id="masterOutput">85%</output>
         </label>
       </section>
 
-      <section class="cue-list" aria-label="Cue list" id="cueList"></section>
+      <section class="song-list" id="songList" aria-label="Song list"></section>
     </main>
 
-    <template id="cueTemplate">
-      <button class="cue-row" type="button">
-        <span class="cue-id"></span>
-        <span>
-          <strong class="cue-title"></strong>
-          <small class="cue-moment"></small>
-        </span>
-      </button>
+    <template id="songTemplate">
+      <article class="song-row">
+        <div class="song-info">
+          <strong class="song-title"></strong>
+          <small class="song-note"></small>
+        </div>
+        <div class="song-actions">
+          <button class="play-button" type="button">Play</button>
+          <button class="fade-button" type="button">Fade out</button>
+        </div>
+      </article>
     </template>
 
     <script src="show-data.js"></script>

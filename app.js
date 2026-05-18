@@ -1,58 +1,43 @@
 (function () {
   const scenes = Array.isArray(window.SHOW_CUES) ? window.SHOW_CUES : [];
-  const cues = scenes.flatMap((scene, sceneIndex) =>
-    scene.cues.map((cue) => ({ ...cue, scene: scene.scene, sceneIndex }))
-  );
+  const songs = scenes.flatMap((scene) => scene.cues);
+  const audioById = new Map();
+  const rowById = new Map();
 
-  const audioByCue = new Map();
-  const rowByCue = new Map();
   const state = {
-    standbyIndex: 0,
     master: 0.85,
     warning: ""
   };
 
   const els = {
-    list: document.querySelector("#cueList"),
-    template: document.querySelector("#cueTemplate"),
-    standby: document.querySelector("#standbyCue"),
-    standbyMoment: document.querySelector("#standbyMoment"),
-    playing: document.querySelector("#playingCue"),
+    list: document.querySelector("#songList"),
+    template: document.querySelector("#songTemplate"),
+    nowPlaying: document.querySelector("#nowPlaying"),
     master: document.querySelector("#masterVolume"),
     masterOutput: document.querySelector("#masterOutput"),
-    go: document.querySelector("#goButton"),
-    prev: document.querySelector("#previousCue"),
-    next: document.querySelector("#nextCue"),
-    panic: document.querySelector("#panicStop"),
-    preload: document.querySelector("#preloadAll")
+    load: document.querySelector("#loadSounds"),
+    stopAll: document.querySelector("#stopAll")
   };
 
-  function findCue(id) {
-    return cues.find((cue) => cue.id === id);
+  function songName(song) {
+    return song.track || song.action || song.id;
   }
 
-  function baseVolume(cue) {
-    return ((cue.volume ?? 80) / 100) * state.master;
+  function songVolume(song) {
+    return ((song.volume ?? 80) / 100) * state.master;
   }
 
-  function displayName(cue) {
-    if (!cue) return "End of show";
-    return cue.track || cue.action || cue.moment || cue.id;
-  }
-
-  function getAudio(cue) {
-    if (!cue?.file) return null;
-
-    if (!audioByCue.has(cue.id)) {
-      const audio = new Audio(cue.file);
+  function getAudio(song) {
+    if (!audioById.has(song.id)) {
+      const audio = new Audio(song.file);
       audio.preload = "auto";
-      audio.loop = Boolean(cue.loop);
-      audio.volume = 0;
+      audio.loop = Boolean(song.loop);
+      audio.volume = songVolume(song);
       audio.addEventListener("ended", syncStatus);
-      audioByCue.set(cue.id, audio);
+      audioById.set(song.id, audio);
     }
 
-    return audioByCue.get(cue.id);
+    return audioById.get(song.id);
   }
 
   function ramp(audio, from, to, seconds, done) {
@@ -74,124 +59,88 @@
     requestAnimationFrame(step);
   }
 
-  async function fireCue(cue) {
-    if (!cue) return;
-
-    if (cue.target) {
-      fadeCue(findCue(cue.target), cue.fadeOut);
-      advanceStandby();
-      return;
-    }
-
-    const audio = getAudio(cue);
-    if (!audio || (cue.volume === 0 && cue.file.includes("silence"))) {
-      state.warning = "";
-      advanceStandby();
-      return;
-    }
-
+  async function playSong(song) {
+    const audio = getAudio(song);
     audio.pause();
     audio.currentTime = 0;
-    audio.loop = Boolean(cue.loop);
+    audio.loop = Boolean(song.loop);
     audio.volume = 0;
 
     try {
       await audio.play();
       state.warning = "";
-      ramp(audio, 0, baseVolume(cue), cue.fadeIn);
+      ramp(audio, 0, songVolume(song), song.fadeIn ?? 1);
     } catch (error) {
-      state.warning = `Missing sound: ${displayName(cue)}`;
+      state.warning = `Could not play ${songName(song)}`;
     }
 
-    advanceStandby();
     syncStatus();
   }
 
-  function fadeCue(cue, seconds) {
-    const audio = cue ? audioByCue.get(cue.id) : null;
+  function fadeSong(song) {
+    const audio = audioById.get(song.id);
     if (!audio || audio.paused) return;
 
-    ramp(audio, audio.volume, 0, seconds ?? cue.fadeOut, () => {
+    ramp(audio, audio.volume, 0, song.fadeOut ?? 5, () => {
       audio.pause();
       audio.currentTime = 0;
-      audio.volume = baseVolume(cue);
+      audio.volume = songVolume(song);
       syncStatus();
     });
   }
 
-  function stopCue(cue) {
-    const audio = audioByCue.get(cue.id);
+  function stopSong(song) {
+    const audio = audioById.get(song.id);
     if (!audio) return;
     audio.pause();
     audio.currentTime = 0;
-    audio.volume = baseVolume(cue);
+    audio.volume = songVolume(song);
   }
 
   function stopAll() {
-    cues.forEach(stopCue);
+    songs.forEach(stopSong);
     state.warning = "";
     syncStatus();
   }
 
-  function preloadAll() {
-    cues.forEach((cue) => getAudio(cue)?.load());
-    els.preload.textContent = "Sounds loaded";
-  }
-
-  function setStandby(index) {
-    state.standbyIndex = Math.max(0, Math.min(cues.length, index));
-    syncStatus();
-    cues[state.standbyIndex] && rowByCue.get(cues[state.standbyIndex].id)?.scrollIntoView({ block: "center" });
-  }
-
-  function advanceStandby() {
-    setStandby(state.standbyIndex + 1);
+  function loadSounds() {
+    songs.forEach((song) => getAudio(song).load());
+    els.load.textContent = "Sounds loaded";
   }
 
   function syncVolumes() {
-    cues.forEach((cue) => {
-      const audio = audioByCue.get(cue.id);
-      if (audio && !audio.paused) audio.volume = baseVolume(cue);
+    songs.forEach((song) => {
+      const audio = audioById.get(song.id);
+      if (audio && !audio.paused) audio.volume = songVolume(song);
     });
   }
 
   function syncStatus() {
-    const standby = cues[state.standbyIndex];
-    els.standby.textContent = standby ? `${standby.id}: ${displayName(standby)}` : "End of show";
-    els.standbyMoment.textContent = standby ? standby.moment : "";
-
-    const playing = cues.filter((cue) => {
-      const audio = audioByCue.get(cue.id);
+    const playing = songs.filter((song) => {
+      const audio = audioById.get(song.id);
       return audio && !audio.paused && !audio.ended;
     });
 
-    els.playing.textContent = playing.length ? playing.map(displayName).join(", ") : state.warning || "Nothing";
+    els.nowPlaying.textContent = playing.length ? playing.map(songName).join(", ") : state.warning || "Nothing";
 
-    cues.forEach((cue) => {
-      const row = rowByCue.get(cue.id);
-      const audio = audioByCue.get(cue.id);
-      row?.classList.toggle("is-next", cue === standby);
-      row?.classList.toggle("is-playing", Boolean(audio && !audio.paused && !audio.ended));
+    songs.forEach((song) => {
+      const audio = audioById.get(song.id);
+      rowById.get(song.id)?.classList.toggle("is-playing", Boolean(audio && !audio.paused && !audio.ended));
     });
   }
 
-  function renderList() {
-    scenes.forEach((scene) => {
-      const heading = document.createElement("h2");
-      heading.textContent = scene.scene;
-      els.list.append(heading);
+  function renderSongs() {
+    songs.forEach((song) => {
+      const fragment = els.template.content.cloneNode(true);
+      const row = fragment.querySelector(".song-row");
 
-      scene.cues.forEach((cue) => {
-        const index = cues.findIndex((item) => item.id === cue.id);
-        const fragment = els.template.content.cloneNode(true);
-        const row = fragment.querySelector(".cue-row");
-        row.querySelector(".cue-id").textContent = cue.id;
-        row.querySelector(".cue-title").textContent = displayName(cue);
-        row.querySelector(".cue-moment").textContent = cue.moment;
-        row.addEventListener("click", () => setStandby(index));
-        rowByCue.set(cue.id, row);
-        els.list.append(fragment);
-      });
+      row.querySelector(".song-title").textContent = songName(song);
+      row.querySelector(".song-note").textContent = song.moment;
+      row.querySelector(".play-button").addEventListener("click", () => playSong(song));
+      row.querySelector(".fade-button").addEventListener("click", () => fadeSong(song));
+
+      rowById.set(song.id, row);
+      els.list.append(fragment);
     });
   }
 
@@ -201,23 +150,14 @@
     syncVolumes();
   });
 
-  els.go.addEventListener("click", () => fireCue(cues[state.standbyIndex]));
-  els.prev.addEventListener("click", () => setStandby(state.standbyIndex - 1));
-  els.next.addEventListener("click", () => setStandby(state.standbyIndex + 1));
-  els.panic.addEventListener("click", stopAll);
-  els.preload.addEventListener("click", preloadAll);
+  els.load.addEventListener("click", loadSounds);
+  els.stopAll.addEventListener("click", stopAll);
 
   document.addEventListener("keydown", (event) => {
     if (event.target.matches("input")) return;
-    if (event.code === "Space") {
-      event.preventDefault();
-      fireCue(cues[state.standbyIndex]);
-    }
-    if (event.key === "ArrowUp") setStandby(state.standbyIndex - 1);
-    if (event.key === "ArrowDown") setStandby(state.standbyIndex + 1);
     if (event.key === "Escape") stopAll();
   });
 
-  renderList();
+  renderSongs();
   syncStatus();
 })();
