@@ -1,4 +1,5 @@
 (function () {
+  const VERSION = "v0.3.0";
   const scenes = Array.isArray(window.SHOW_CUES) ? window.SHOW_CUES : [];
   const songs = scenes.flatMap((scene) => scene.cues);
   const audioById = new Map();
@@ -9,7 +10,8 @@
     master: 0.85,
     warning: "",
     looping: new Set(),
-    levels: new Map()
+    levels: new Map(),
+    ramps: new Map()
   };
 
   const els = {
@@ -64,21 +66,38 @@
     return audioById.get(song.id);
   }
 
-  function ramp(from, to, seconds, onUpdate, done) {
+  function cancelRamp(songId) {
+    const existing = state.ramps.get(songId);
+    if (existing) existing.cancelled = true;
+    state.ramps.delete(songId);
+  }
+
+  function startRamp(song, from, to, seconds, onUpdate, done) {
+    cancelRamp(song.id);
+    const token = { cancelled: false };
+    state.ramps.set(song.id, token);
+
+    const finish = () => {
+      if (token.cancelled) return;
+      state.ramps.delete(song.id);
+      if (done) done();
+    };
+
     const duration = Math.max(0, seconds || 0) * 1000;
     if (!duration) {
       if (onUpdate) onUpdate(to);
-      if (done) done();
+      finish();
       return;
     }
 
     const started = performance.now();
     const step = (now) => {
+      if (token.cancelled) return;
       const progress = Math.min(1, (now - started) / duration);
       const value = from + (to - from) * progress;
       if (onUpdate) onUpdate(value);
       if (progress < 1) requestAnimationFrame(step);
-      else if (done) done();
+      else finish();
     };
 
     requestAnimationFrame(step);
@@ -86,6 +105,7 @@
 
   async function playSong(song) {
     const audio = getAudio(song);
+    cancelRamp(song.id);
     audio.pause();
     audio.currentTime = 0;
     audio.loop = state.looping.has(song.id);
@@ -104,17 +124,20 @@
 
   async function fadeInSong(song) {
     const audio = getAudio(song);
-    audio.pause();
-    audio.currentTime = 0;
-    audio.loop = state.looping.has(song.id);
-    setSongLevel(song, 0);
+    cancelRamp(song.id);
+    const startLevel = audio.paused ? 0 : songLevel(song);
+    if (audio.paused) {
+      audio.currentTime = 0;
+      audio.loop = state.looping.has(song.id);
+    }
+    setSongLevel(song, startLevel);
     ensureMixer(song);
     updateMixer(song);
 
     try {
-      await audio.play();
+      if (audio.paused) await audio.play();
       state.warning = "";
-      ramp(0, defaultSongLevel(song), song.fadeIn || 4, (level) => setSongLevel(song, level), syncStatus);
+      startRamp(song, startLevel, defaultSongLevel(song), song.fadeIn || 4, (level) => setSongLevel(song, level), syncStatus);
     } catch (error) {
       state.warning = `Could not play ${songName(song)}`;
     }
@@ -127,7 +150,7 @@
     if (!audio || audio.paused) return;
 
     ensureMixer(song);
-    ramp(songLevel(song), 0, song.fadeOut ?? 5, (level) => setSongLevel(song, level), () => {
+    startRamp(song, songLevel(song), 0, song.fadeOut ?? 5, (level) => setSongLevel(song, level), () => {
       audio.pause();
       audio.currentTime = 0;
       state.levels.delete(song.id);
@@ -140,6 +163,7 @@
   function stopSong(song) {
     const audio = audioById.get(song.id);
     if (!audio) return;
+    cancelRamp(song.id);
     audio.pause();
     audio.currentTime = 0;
     state.levels.delete(song.id);
@@ -381,6 +405,9 @@
     if (event.target.matches("input")) return;
     if (event.key === "Escape") stopAll();
   });
+
+  const versionEl = document.querySelector("#version");
+  if (versionEl) versionEl.textContent = VERSION;
 
   renderSongs();
   loadSounds();

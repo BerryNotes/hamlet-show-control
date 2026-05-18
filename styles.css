@@ -60,6 +60,13 @@ button:focus-visible {
   text-transform: uppercase;
 }
 
+.version {
+  margin-left: 8px;
+  color: var(--muted);
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+}
+
 h1 {
   margin: 0;
   font-size: clamp(1.6rem, 5vw, 2.6rem);
