@@ -76,13 +76,17 @@ h1 {
 }
 
 .page {
-  width: min(900px, calc(100% - 28px));
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(300px, 360px);
+  gap: 16px;
+  width: min(1260px, calc(100% - 28px));
   margin: 20px auto 48px;
 }
 
 .status,
 .controls,
-.song-row {
+.song-row,
+.mixer {
   border: 1px solid var(--line);
   border-radius: 8px;
   background: var(--panel);
@@ -212,8 +216,58 @@ output {
   background: #3a2528;
 }
 
+.mixer {
+  align-self: start;
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  position: sticky;
+  top: 14px;
+}
+
+.mixer h2 {
+  margin: 0;
+  color: var(--gold);
+  font-size: 1.25rem;
+  letter-spacing: 0;
+}
+
+.empty-mixer {
+  margin: 0;
+  color: var(--muted);
+}
+
+.mixer-list {
+  display: grid;
+  gap: 10px;
+}
+
+.mixer-row {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #12171c;
+}
+
+.mixer-row label {
+  display: grid;
+  grid-template-columns: 62px 1fr 48px;
+  align-items: center;
+  gap: 10px;
+}
+
+.mixer-row span {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
 @media (max-width: 680px) {
   .topbar,
+  .page,
   .controls,
   .controls label,
   .song-row {

@@ -3,6 +3,7 @@
   const songs = scenes.flatMap((scene) => scene.cues);
   const audioById = new Map();
   const rowById = new Map();
+  const mixerById = new Map();
 
   const state = {
     master: 0.85,
@@ -13,6 +14,9 @@
   const els = {
     list: document.querySelector("#songList"),
     template: document.querySelector("#songTemplate"),
+    mixerList: document.querySelector("#mixerList"),
+    mixerTemplate: document.querySelector("#mixerTemplate"),
+    emptyMixer: document.querySelector("#emptyMixer"),
     nowPlaying: document.querySelector("#nowPlaying"),
     master: document.querySelector("#masterVolume"),
     masterOutput: document.querySelector("#masterOutput"),
@@ -41,10 +45,11 @@
     return audioById.get(song.id);
   }
 
-  function ramp(audio, from, to, seconds, done) {
+  function ramp(audio, from, to, seconds, onUpdate, done) {
     const duration = Math.max(0, seconds || 0) * 1000;
     if (!duration) {
       audio.volume = to;
+      if (onUpdate) onUpdate();
       if (done) done();
       return;
     }
@@ -53,6 +58,7 @@
     const step = (now) => {
       const progress = Math.min(1, (now - started) / duration);
       audio.volume = from + (to - from) * progress;
+      if (onUpdate) onUpdate();
       if (progress < 1) requestAnimationFrame(step);
       else if (done) done();
     };
@@ -66,6 +72,7 @@
     audio.currentTime = 0;
     audio.loop = state.looping.has(song.id);
     audio.volume = songVolume(song);
+    ensureMixer(song);
 
     try {
       await audio.play();
@@ -83,11 +90,13 @@
     audio.currentTime = 0;
     audio.loop = state.looping.has(song.id);
     audio.volume = 0;
+    ensureMixer(song);
+    updateMixer(song);
 
     try {
       await audio.play();
       state.warning = "";
-      ramp(audio, 0, songVolume(song), song.fadeIn || 4);
+      ramp(audio, 0, songVolume(song), song.fadeIn || 4, () => updateMixer(song), syncStatus);
     } catch (error) {
       state.warning = `Could not play ${songName(song)}`;
     }
@@ -99,10 +108,12 @@
     const audio = audioById.get(song.id);
     if (!audio || audio.paused) return;
 
-    ramp(audio, audio.volume, 0, song.fadeOut ?? 5, () => {
+    ensureMixer(song);
+    ramp(audio, audio.volume, 0, song.fadeOut ?? 5, () => updateMixer(song), () => {
       audio.pause();
       audio.currentTime = 0;
       audio.volume = songVolume(song);
+      removeMixer(song);
       syncStatus();
     });
   }
@@ -113,6 +124,7 @@
     audio.pause();
     audio.currentTime = 0;
     audio.volume = songVolume(song);
+    removeMixer(song);
   }
 
   function stopAll() {
@@ -129,8 +141,53 @@
   function syncVolumes() {
     songs.forEach((song) => {
       const audio = audioById.get(song.id);
-      if (audio && !audio.paused) audio.volume = songVolume(song);
+      if (audio && !audio.paused) {
+        audio.volume = songVolume(song);
+        updateMixer(song);
+      }
     });
+  }
+
+  function ensureMixer(song) {
+    if (mixerById.has(song.id)) return mixerById.get(song.id);
+
+    const fragment = els.mixerTemplate.content.cloneNode(true);
+    const row = fragment.querySelector(".mixer-row");
+    const volume = row.querySelector(".mixer-volume");
+    const output = row.querySelector(".mixer-output");
+
+    row.querySelector(".mixer-title").textContent = songName(song);
+    volume.addEventListener("input", () => {
+      const audio = audioById.get(song.id);
+      if (!audio) return;
+      audio.volume = Number(volume.value) / 100;
+      output.textContent = `${volume.value}%`;
+    });
+
+    mixerById.set(song.id, row);
+    els.mixerList.append(fragment);
+    els.emptyMixer.hidden = true;
+    updateMixer(song);
+    return row;
+  }
+
+  function updateMixer(song) {
+    const row = mixerById.get(song.id);
+    const audio = audioById.get(song.id);
+    if (!row || !audio) return;
+
+    const percent = Math.round(audio.volume * 100);
+    row.querySelector(".mixer-volume").value = String(percent);
+    row.querySelector(".mixer-output").textContent = `${percent}%`;
+  }
+
+  function removeMixer(song) {
+    const row = mixerById.get(song.id);
+    if (!row) return;
+
+    row.remove();
+    mixerById.delete(song.id);
+    els.emptyMixer.hidden = mixerById.size > 0;
   }
 
   function syncStatus() {
@@ -143,7 +200,10 @@
 
     songs.forEach((song) => {
       const audio = audioById.get(song.id);
-      rowById.get(song.id)?.classList.toggle("is-playing", Boolean(audio && !audio.paused && !audio.ended));
+      const isPlaying = Boolean(audio && !audio.paused && !audio.ended);
+      rowById.get(song.id)?.classList.toggle("is-playing", isPlaying);
+      if (isPlaying) updateMixer(song);
+      else removeMixer(song);
     });
   }
 

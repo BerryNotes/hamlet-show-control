@@ -16,21 +16,29 @@
     </header>
 
     <main class="page">
-      <section class="status" aria-label="Playback status">
-        <span>Now playing</span>
-        <strong id="nowPlaying">Nothing</strong>
+      <section class="board" aria-label="Song board">
+        <section class="status" aria-label="Playback status">
+          <span>Now playing</span>
+          <strong id="nowPlaying">Nothing</strong>
+        </section>
+
+        <section class="controls" aria-label="Sound controls">
+          <button id="loadSounds" type="button">Load sounds</button>
+          <label>
+            <span>Volume</span>
+            <input id="masterVolume" type="range" min="0" max="100" value="85">
+            <output id="masterOutput">85%</output>
+          </label>
+        </section>
+
+        <section class="song-list" id="songList" aria-label="Song list"></section>
       </section>
 
-      <section class="controls" aria-label="Sound controls">
-        <button id="loadSounds" type="button">Load sounds</button>
-        <label>
-          <span>Volume</span>
-          <input id="masterVolume" type="range" min="0" max="100" value="85">
-          <output id="masterOutput">85%</output>
-        </label>
-      </section>
-
-      <section class="song-list" id="songList" aria-label="Song list"></section>
+      <aside class="mixer" aria-label="Live mixer">
+        <h2>Mixer</h2>
+        <p id="emptyMixer" class="empty-mixer">No sounds playing</p>
+        <section id="mixerList" class="mixer-list"></section>
+      </aside>
     </main>
 
     <template id="songTemplate">
@@ -46,6 +54,17 @@
           <button class="fade-button" type="button">Fade out</button>
           <button class="stop-button" type="button">Stop</button>
         </div>
+      </article>
+    </template>
+
+    <template id="mixerTemplate">
+      <article class="mixer-row">
+        <strong class="mixer-title"></strong>
+        <label>
+          <span>Volume</span>
+          <input class="mixer-volume" type="range" min="0" max="100" value="0">
+          <output class="mixer-output">0%</output>
+        </label>
       </article>
     </template>
 
