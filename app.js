@@ -57,7 +57,9 @@
       audio.addEventListener("loadedmetadata", () => updateMixer(song));
       audio.addEventListener("timeupdate", () => updateMixer(song));
       audio.addEventListener("seeked", () => {
-        state.seekTargets.delete(song.id);
+        const target = state.seekTargets.get(song.id);
+        if (Number.isFinite(target) && Math.abs(audio.currentTime - target) > 1.5) return;
+        if (Number.isFinite(target)) state.seekTargets.delete(song.id);
         updateMixer(song);
       });
       audio.addEventListener("ended", syncStatus);
