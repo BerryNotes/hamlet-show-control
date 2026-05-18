@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Hamlet Show Control</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Hamlet</p>
+        <h1>Show Control</h1>
+      </div>
+      <div class="show-clock">
+        <span id="clock">--:--:--</span>
+        <button id="panicStop" class="panic" type="button">STOP ALL</button>
+      </div>
+    </header>
+
+    <main class="workspace">
+      <aside class="sidebar" aria-label="Scene list">
+        <div class="sidebar-head">
+          <span>Run Sheet</span>
+          <button id="preloadAll" type="button">Preload</button>
+        </div>
+        <nav id="sceneList" class="scene-list"></nav>
+      </aside>
+
+      <section class="operator">
+        <div class="status-strip">
+          <div>
+            <span class="label">Standby</span>
+            <strong id="standbyCue">No cue selected</strong>
+          </div>
+          <div>
+            <span class="label">Playing</span>
+            <strong id="playingCue">Nothing</strong>
+          </div>
+          <div class="master-control">
+            <label for="masterVolume">Master</label>
+            <input id="masterVolume" type="range" min="0" max="100" value="85">
+            <output id="masterOutput">85%</output>
+          </div>
+        </div>
+
+        <div class="go-panel">
+          <button id="previousCue" class="nav-cue" type="button">Prev</button>
+          <button id="goButton" class="go-button" type="button">GO</button>
+          <button id="nextCue" class="nav-cue" type="button">Next</button>
+        </div>
+
+        <div class="cue-table-wrap">
+          <table class="cue-table">
+            <thead>
+              <tr>
+                <th>Cue</th>
+                <th>Moment</th>
+                <th>Action</th>
+                <th>Track</th>
+                <th>Vol</th>
+                <th>Fade</th>
+                <th>Loop</th>
+                <th>Controls</th>
+              </tr>
+            </thead>
+            <tbody id="cueRows"></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <template id="cueRowTemplate">
+      <tr>
+        <td class="cue-id"></td>
+        <td class="cue-moment"></td>
+        <td class="cue-action"></td>
+        <td class="cue-track"></td>
+        <td>
+          <input class="cue-volume" type="range" min="0" max="100">
+          <output class="cue-volume-output"></output>
+        </td>
+        <td class="cue-fade"></td>
+        <td class="cue-loop"></td>
+        <td class="row-actions">
+          <button class="row-play" type="button" title="Fire cue">GO</button>
+          <button class="row-fade" type="button" title="Fade out">Fade</button>
+          <button class="row-stop" type="button" title="Stop cue">Stop</button>
+        </td>
+      </tr>
+    </template>
+
+    <script src="show-data.js"></script>
+    <script src="app.js"></script>
+  </body>
+</html>
