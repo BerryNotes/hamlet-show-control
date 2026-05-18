@@ -8,15 +8,15 @@
   const rowByCue = new Map();
   const state = {
     standbyIndex: 0,
-    master: 0.85
+    master: 0.85,
+    warning: ""
   };
 
   const els = {
-    clock: document.querySelector("#clock"),
-    sceneList: document.querySelector("#sceneList"),
-    rows: document.querySelector("#cueRows"),
-    template: document.querySelector("#cueRowTemplate"),
+    list: document.querySelector("#cueList"),
+    template: document.querySelector("#cueTemplate"),
     standby: document.querySelector("#standbyCue"),
+    standbyMoment: document.querySelector("#standbyMoment"),
     playing: document.querySelector("#playingCue"),
     master: document.querySelector("#masterVolume"),
     masterOutput: document.querySelector("#masterOutput"),
@@ -27,10 +27,6 @@
     preload: document.querySelector("#preloadAll")
   };
 
-  function cueLabel(cue) {
-    return `${cue.id} · ${cue.moment}`;
-  }
-
   function findCue(id) {
     return cues.find((cue) => cue.id === id);
   }
@@ -39,8 +35,13 @@
     return ((cue.volume ?? 80) / 100) * state.master;
   }
 
+  function displayName(cue) {
+    if (!cue) return "End of show";
+    return cue.track || cue.action || cue.moment || cue.id;
+  }
+
   function getAudio(cue) {
-    if (!cue.file) return null;
+    if (!cue?.file) return null;
 
     if (!audioByCue.has(cue.id)) {
       const audio = new Audio(cue.file);
@@ -74,6 +75,8 @@
   }
 
   async function fireCue(cue) {
+    if (!cue) return;
+
     if (cue.target) {
       fadeCue(findCue(cue.target), cue.fadeOut);
       advanceStandby();
@@ -81,7 +84,11 @@
     }
 
     const audio = getAudio(cue);
-    if (!audio) return;
+    if (!audio || (cue.volume === 0 && cue.file.includes("silence"))) {
+      state.warning = "";
+      advanceStandby();
+      return;
+    }
 
     audio.pause();
     audio.currentTime = 0;
@@ -90,9 +97,10 @@
 
     try {
       await audio.play();
+      state.warning = "";
       ramp(audio, 0, baseVolume(cue), cue.fadeIn);
     } catch (error) {
-      els.playing.textContent = `Missing file: ${cue.file}`;
+      state.warning = `Missing sound: ${displayName(cue)}`;
     }
 
     advanceStandby();
@@ -100,8 +108,7 @@
   }
 
   function fadeCue(cue, seconds) {
-    if (!cue) return;
-    const audio = audioByCue.get(cue.id);
+    const audio = cue ? audioByCue.get(cue.id) : null;
     if (!audio || audio.paused) return;
 
     ramp(audio, audio.volume, 0, seconds ?? cue.fadeOut, () => {
@@ -118,21 +125,23 @@
     audio.pause();
     audio.currentTime = 0;
     audio.volume = baseVolume(cue);
-    syncStatus();
   }
 
   function stopAll() {
     cues.forEach(stopCue);
+    state.warning = "";
+    syncStatus();
   }
 
   function preloadAll() {
     cues.forEach((cue) => getAudio(cue)?.load());
+    els.preload.textContent = "Sounds loaded";
   }
 
   function setStandby(index) {
-    state.standbyIndex = Math.max(0, Math.min(cues.length - 1, index));
+    state.standbyIndex = Math.max(0, Math.min(cues.length, index));
     syncStatus();
-    rowByCue.get(cues[state.standbyIndex]?.id)?.scrollIntoView({ block: "center" });
+    cues[state.standbyIndex] && rowByCue.get(cues[state.standbyIndex].id)?.scrollIntoView({ block: "center" });
   }
 
   function advanceStandby() {
@@ -148,82 +157,42 @@
 
   function syncStatus() {
     const standby = cues[state.standbyIndex];
-    els.standby.textContent = standby ? cueLabel(standby) : "End of show";
+    els.standby.textContent = standby ? `${standby.id}: ${displayName(standby)}` : "End of show";
+    els.standbyMoment.textContent = standby ? standby.moment : "";
 
     const playing = cues.filter((cue) => {
       const audio = audioByCue.get(cue.id);
       return audio && !audio.paused && !audio.ended;
     });
 
-    els.playing.textContent = playing.length ? playing.map((cue) => cue.id).join(", ") : "Nothing";
+    els.playing.textContent = playing.length ? playing.map(displayName).join(", ") : state.warning || "Nothing";
 
     cues.forEach((cue) => {
       const row = rowByCue.get(cue.id);
       const audio = audioByCue.get(cue.id);
-      row?.classList.toggle("is-standby", cue === standby);
+      row?.classList.toggle("is-next", cue === standby);
       row?.classList.toggle("is-playing", Boolean(audio && !audio.paused && !audio.ended));
     });
-
-    document.querySelectorAll(".scene-button").forEach((button) => {
-      button.setAttribute(
-        "aria-current",
-        String(Number(button.dataset.sceneIndex) === standby?.sceneIndex)
-      );
-    });
   }
 
-  function renderScenes() {
-    scenes.forEach((scene, sceneIndex) => {
-      const button = document.createElement("button");
-      button.type = "button";
-      button.className = "scene-button";
-      button.dataset.sceneIndex = String(sceneIndex);
-      button.innerHTML = `<strong>${scene.scene}</strong><span>${scene.cues.length} cues</span>`;
-      button.addEventListener("click", () => {
-        const firstCue = cues.findIndex((cue) => cue.sceneIndex === sceneIndex);
-        setStandby(firstCue);
+  function renderList() {
+    scenes.forEach((scene) => {
+      const heading = document.createElement("h2");
+      heading.textContent = scene.scene;
+      els.list.append(heading);
+
+      scene.cues.forEach((cue) => {
+        const index = cues.findIndex((item) => item.id === cue.id);
+        const fragment = els.template.content.cloneNode(true);
+        const row = fragment.querySelector(".cue-row");
+        row.querySelector(".cue-id").textContent = cue.id;
+        row.querySelector(".cue-title").textContent = displayName(cue);
+        row.querySelector(".cue-moment").textContent = cue.moment;
+        row.addEventListener("click", () => setStandby(index));
+        rowByCue.set(cue.id, row);
+        els.list.append(fragment);
       });
-      els.sceneList.append(button);
     });
-  }
-
-  function renderRows() {
-    cues.forEach((cue, index) => {
-      const fragment = els.template.content.cloneNode(true);
-      const row = fragment.querySelector("tr");
-      const volume = fragment.querySelector(".cue-volume");
-      const volumeOutput = fragment.querySelector(".cue-volume-output");
-
-      fragment.querySelector(".cue-id").textContent = cue.id;
-      fragment.querySelector(".cue-moment").textContent = cue.moment;
-      fragment.querySelector(".cue-action").textContent = cue.action;
-      fragment.querySelector(".cue-track").textContent = cue.track || cue.target || "";
-      fragment.querySelector(".cue-fade").textContent = cue.target ? `${cue.fadeOut || 0}s out` : `${cue.fadeIn || 0}s in / ${cue.fadeOut || 0}s out`;
-      fragment.querySelector(".cue-loop").textContent = cue.loop ? "Yes" : "";
-
-      volume.value = cue.volume ?? 0;
-      volume.disabled = !cue.file;
-      volumeOutput.textContent = cue.file ? `${volume.value}%` : "";
-      volume.addEventListener("input", () => {
-        cue.volume = Number(volume.value);
-        volumeOutput.textContent = `${cue.volume}%`;
-        syncVolumes();
-      });
-
-      fragment.querySelector(".row-play").addEventListener("click", () => fireCue(cue));
-      fragment.querySelector(".row-fade").addEventListener("click", () => fadeCue(cue));
-      fragment.querySelector(".row-stop").addEventListener("click", () => stopCue(cue));
-      row.addEventListener("click", (event) => {
-        if (!event.target.closest("button, input")) setStandby(index);
-      });
-
-      rowByCue.set(cue.id, row);
-      els.rows.append(fragment);
-    });
-  }
-
-  function tickClock() {
-    els.clock.textContent = new Date().toLocaleTimeString([], { hour12: false });
   }
 
   els.master.addEventListener("input", () => {
@@ -249,9 +218,6 @@
     if (event.key === "Escape") stopAll();
   });
 
-  renderScenes();
-  renderRows();
+  renderList();
   syncStatus();
-  tickClock();
-  setInterval(tickClock, 1000);
 })();
