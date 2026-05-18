@@ -185,17 +185,27 @@
 
     row.querySelector(".mixer-title").textContent = songName(song);
 
-    const seekToPointer = (event) => {
+    const setDurationBar = (ratio) => {
+      const clamped = Math.min(1, Math.max(0, ratio));
+      const percent = clamped * 100;
+      durationBar.style.setProperty("--progress", `${percent}%`);
+      durationBar.setAttribute("aria-valuenow", String(Math.round(clamped * 1000)));
+    };
+
+    const seekToRatio = (ratio) => {
       const audio = audioById.get(song.id);
       if (!audio || !Number.isFinite(audio.duration) || audio.duration <= 0) return;
 
+      const clamped = Math.min(1, Math.max(0, ratio));
+      setDurationBar(clamped);
+      audio.currentTime = clamped * audio.duration;
+      row.querySelector(".duration-time").textContent = `${formatTime(audio.currentTime)} / ${formatTime(audio.duration)}`;
+    };
+
+    const seekToPointer = (event) => {
       const rect = durationBar.getBoundingClientRect();
       if (!rect.width) return;
-      const ratio = Math.min(1, Math.max(0, (event.clientX - rect.left) / rect.width));
-      durationBar.value = String(Math.round(ratio * 1000));
-      durationBar.style.setProperty("--progress", `${ratio * 100}%`);
-      audio.currentTime = ratio * audio.duration;
-      row.querySelector(".duration-time").textContent = `${formatTime(audio.currentTime)} / ${formatTime(audio.duration)}`;
+      seekToRatio((event.clientX - rect.left) / rect.width);
     };
 
     durationBar.addEventListener("pointerdown", (event) => {
@@ -221,11 +231,22 @@
       updateMixer(song);
     });
 
-    durationBar.addEventListener("input", () => {
+    durationBar.addEventListener("keydown", (event) => {
       const audio = audioById.get(song.id);
       if (!audio || !Number.isFinite(audio.duration) || audio.duration <= 0) return;
-      audio.currentTime = (Number(durationBar.value) / 1000) * audio.duration;
-      updateMixer(song);
+      const step = event.shiftKey ? 10 : 2;
+
+      if (event.key === "ArrowLeft") {
+        event.preventDefault();
+        audio.currentTime = Math.max(0, audio.currentTime - step);
+        updateMixer(song);
+      }
+
+      if (event.key === "ArrowRight") {
+        event.preventDefault();
+        audio.currentTime = Math.min(audio.duration, audio.currentTime + step);
+        updateMixer(song);
+      }
     });
 
     volume.addEventListener("input", () => {
@@ -256,8 +277,8 @@
     const durationBar = row.querySelector(".duration-bar");
     if (row.dataset.seeking !== "true") {
       const clampedProgress = Math.min(1000, Math.max(0, progress));
-      durationBar.value = clampedProgress;
       durationBar.style.setProperty("--progress", `${clampedProgress / 10}%`);
+      durationBar.setAttribute("aria-valuenow", String(Math.round(clampedProgress)));
     }
     row.querySelector(".duration-time").textContent = `${formatTime(audio.currentTime)} / ${formatTime(duration)}`;
   }
