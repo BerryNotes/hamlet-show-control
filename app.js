@@ -225,17 +225,27 @@
       return ratio * duration;
     };
 
+    durationBar.addEventListener("click", (event) => {
+      if (row.dataset.didDrag === "true") {
+        row.dataset.didDrag = "false";
+        return;
+      }
+      const seconds = secondsFromPointer(event);
+      if (seconds !== null) commitSeek(seconds);
+    });
+
     durationBar.addEventListener("pointerdown", (event) => {
-      event.preventDefault();
       const seconds = secondsFromPointer(event);
       if (seconds === null) return;
       row.dataset.seeking = "true";
+      row.dataset.didDrag = "false";
       durationBar.setPointerCapture(event.pointerId);
       previewSeek(seconds);
     });
 
     durationBar.addEventListener("pointermove", (event) => {
       if (row.dataset.seeking !== "true") return;
+      row.dataset.didDrag = "true";
       const seconds = secondsFromPointer(event);
       if (seconds !== null) previewSeek(seconds);
     });
