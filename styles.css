@@ -646,23 +646,23 @@ body.is-playing .live-dot {
   border: none;
 }
 
-/* fader cap — white plastic with center line */
+/* fader cap — gold with center seam */
 .fader-input::-webkit-slider-thumb {
   -webkit-appearance: none;
   appearance: none;
   width: 30px;
   height: 22px;
-  margin-top: 0;
+  margin-top: -20px;
   border-radius: 3px;
   background:
-    linear-gradient(180deg, #f4f1ea 0%, #d4cfc4 48%, #b8b3a6 50%, #e0dccf 52%, #c4bdac 100%);
-  border: 1px solid #5a5448;
+    linear-gradient(180deg, #f0d28a 0%, #d6b260 48%, #a8853f 50%, #e5c378 52%, #b89653 100%);
+  border: 1px solid #6a5028;
   cursor: ns-resize;
   box-shadow:
-    0 0 0 1px rgba(0,0,0,0.5),
-    0 1px 0 rgba(255,255,255,0.6) inset,
-    0 -1px 0 rgba(0,0,0,0.2) inset,
-    0 3px 6px rgba(0,0,0,0.6);
+    0 0 0 1px rgba(0,0,0,0.6),
+    0 1px 0 rgba(255,235,180,0.4) inset,
+    0 -1px 0 rgba(0,0,0,0.3) inset,
+    0 3px 6px rgba(0,0,0,0.7);
   position: relative;
 }
 
@@ -671,10 +671,10 @@ body.is-playing .live-dot {
   height: 22px;
   border-radius: 3px;
   background:
-    linear-gradient(180deg, #f4f1ea 0%, #d4cfc4 48%, #b8b3a6 50%, #e0dccf 52%, #c4bdac 100%);
-  border: 1px solid #5a5448;
+    linear-gradient(180deg, #f0d28a 0%, #d6b260 48%, #a8853f 50%, #e5c378 52%, #b89653 100%);
+  border: 1px solid #6a5028;
   cursor: ns-resize;
-  box-shadow: 0 0 0 1px rgba(0,0,0,0.5), 0 3px 6px rgba(0,0,0,0.6);
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.6), 0 3px 6px rgba(0,0,0,0.7);
 }
 
 .fader-input:focus { outline: none; }
@@ -688,12 +688,18 @@ body.is-playing .live-dot {
 
 .master-strip .fader-input::-webkit-slider-thumb {
   background:
-    linear-gradient(180deg, #d65450 0%, #a83a36 48%, #8a2a26 50%, #c14844 52%, #9c322f 100%);
-  border-color: #4a1b1a;
+    linear-gradient(180deg, #fbe2a3 0%, #e2c074 48%, #b08838 50%, #f0d28a 52%, #c19f4c 100%);
+  border-color: #8a6e28;
+  box-shadow:
+    0 0 0 1px rgba(0,0,0,0.6),
+    0 1px 0 rgba(255,245,200,0.5) inset,
+    0 -1px 0 rgba(0,0,0,0.3) inset,
+    0 3px 6px rgba(0,0,0,0.7),
+    0 0 8px rgba(226, 192, 116, 0.4);
 }
 .master-strip .fader-input::-moz-range-thumb {
-  background: linear-gradient(180deg, #d65450, #a83a36 50%, #9c322f);
-  border-color: #4a1b1a;
+  background: linear-gradient(180deg, #fbe2a3, #e2c074 50%, #c19f4c);
+  border-color: #8a6e28;
 }
 
 /* dB scale next to fader */
