@@ -206,6 +206,7 @@ h1 {
   gap: 8px;
   overflow-y: auto;
   padding-right: 4px;
+  overscroll-behavior: contain;
 }
 
 .song-list::-webkit-scrollbar { width: 8px; }
@@ -579,8 +580,8 @@ body.is-playing .live-dot {
 .fader-track {
   position: absolute;
   left: 50%;
-  top: 0;
-  bottom: 0;
+  top: 11px;
+  bottom: 11px;
   width: 4px;
   transform: translateX(-50%);
   background: linear-gradient(90deg, #0a0807, #1a1612 50%, #0a0807);
@@ -612,7 +613,7 @@ body.is-playing .live-dot {
   writing-mode: vertical-lr;
   direction: rtl;
   width: 36px;
-  height: var(--fader-height);
+  height: calc(var(--fader-height) - 22px);
   background: transparent;
   margin: 0;
   z-index: 2;

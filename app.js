@@ -1,5 +1,5 @@
 (function () {
-  const VERSION = "v0.8.1";
+  const VERSION = "v0.8.2";
   const scenes = Array.isArray(window.SHOW_CUES) ? window.SHOW_CUES : [];
   const songs = scenes.flatMap((scene) => scene.cues);
   const audioById = new Map();
@@ -27,7 +27,6 @@
     masterFill: document.querySelector("#masterFill"),
     masterMeterL: document.querySelector("#masterMeterL"),
     masterMeterR: document.querySelector("#masterMeterR"),
-    load: document.querySelector("#loadSounds"),
     stopAll: document.querySelector("#stopAll")
   };
 
@@ -215,7 +214,6 @@
       if (audio.readyState >= HTMLMediaElement.HAVE_ENOUGH_DATA) return;
       audio.load();
     });
-    els.load.textContent = "Sounds loaded";
   }
 
   function syncVolumes() {
@@ -385,7 +383,6 @@
   });
   updateMasterFill();
 
-  els.load.addEventListener("click", loadSounds);
   els.stopAll.addEventListener("click", stopAll);
 
   document.addEventListener("keydown", (event) => {
