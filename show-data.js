@@ -67,6 +67,17 @@ window.SHOW_CUES = [
         fadeIn: 8,
         fadeOut: 6,
         loop: false
+      },
+      {
+        id: "7",
+        moment: "Use between acts or for scene-change underscoring.",
+        action: "Play interlude",
+        track: "Interlude",
+        file: "assets/audio/interlude.mp3",
+        volume: 80,
+        fadeIn: 8,
+        fadeOut: 6,
+        loop: false
       }
     ]
   }
