@@ -159,12 +159,21 @@ h1 {
   background: var(--panel);
   box-shadow: var(--shadow-soft);
   padding: 18px;
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 14px;
   position: sticky;
   top: 16px;
   max-height: calc(100vh - 32px);
   overflow: hidden;
+  min-height: 0;
+}
+
+.cue-panel-header { flex: 0 0 auto; }
+
+.song-list {
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 .cue-panel-header {
@@ -570,8 +579,8 @@ body.is-playing .live-dot {
 .fader-track {
   position: absolute;
   left: 50%;
-  top: 8px;
-  bottom: 8px;
+  top: 0;
+  bottom: 0;
   width: 4px;
   transform: translateX(-50%);
   background: linear-gradient(90deg, #0a0807, #1a1612 50%, #0a0807);
