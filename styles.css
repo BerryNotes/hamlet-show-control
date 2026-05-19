@@ -262,8 +262,6 @@ output {
   position: relative;
   width: 100%;
   height: 20px;
-  cursor: pointer;
-  touch-action: none;
 }
 
 .duration-bar::before,
@@ -298,11 +296,6 @@ output {
   border-radius: 999px;
   background: var(--gold);
   pointer-events: none;
-}
-
-.duration-bar:focus-visible {
-  outline: 2px solid var(--gold);
-  outline-offset: 5px;
 }
 
 .duration-time {

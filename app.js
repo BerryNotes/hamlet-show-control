@@ -1,5 +1,5 @@
 (function () {
-  const VERSION = "v0.4.1";
+  const VERSION = "v0.5.0";
   const scenes = Array.isArray(window.SHOW_CUES) ? window.SHOW_CUES : [];
   const songs = scenes.flatMap((scene) => scene.cues);
   const audioById = new Map();
@@ -235,99 +235,10 @@
 
     const fragment = els.mixerTemplate.content.cloneNode(true);
     const row = fragment.querySelector(".mixer-row");
-    const durationBar = row.querySelector(".duration-bar");
     const volume = row.querySelector(".mixer-volume");
     const output = row.querySelector(".mixer-output");
 
     row.querySelector(".mixer-title").textContent = songName(song);
-
-    const previewSeek = (seconds) => {
-      const audio = audioById.get(song.id);
-      const duration = audio && Number.isFinite(audio.duration) ? audio.duration : 0;
-      if (!duration) return;
-      const clamped = Math.min(duration, Math.max(0, seconds));
-      const percent = (clamped / duration) * 100;
-      durationBar.style.setProperty("--progress", `${percent}%`);
-      durationBar.setAttribute("aria-valuenow", String(Math.round((clamped / duration) * 1000)));
-      row.querySelector(".duration-time").textContent = `${formatTime(clamped)} / ${formatTime(duration)}`;
-    };
-
-    const commitSeek = (seconds) => {
-      const audio = audioById.get(song.id);
-      const duration = audio && Number.isFinite(audio.duration) ? audio.duration : 0;
-      if (!duration) return;
-      const target = Math.min(duration, Math.max(0, seconds));
-      try {
-        audio.currentTime = target;
-      } catch (error) {
-        state.warning = `Could not seek ${songName(song)}`;
-      }
-      updateMixer(song);
-    };
-
-    const secondsFromPointer = (event) => {
-      const audio = audioById.get(song.id);
-      const duration = audio && Number.isFinite(audio.duration) ? audio.duration : 0;
-      if (!duration) return null;
-      const rect = durationBar.getBoundingClientRect();
-      if (!rect.width) return null;
-      const ratio = Math.min(1, Math.max(0, (event.clientX - rect.left) / rect.width));
-      return ratio * duration;
-    };
-
-    durationBar.addEventListener("click", (event) => {
-      if (row.dataset.didDrag === "true") {
-        row.dataset.didDrag = "false";
-        return;
-      }
-      const seconds = secondsFromPointer(event);
-      if (seconds !== null) commitSeek(seconds);
-    });
-
-    durationBar.addEventListener("pointerdown", (event) => {
-      const seconds = secondsFromPointer(event);
-      if (seconds === null) return;
-      row.dataset.seeking = "true";
-      row.dataset.didDrag = "false";
-      durationBar.setPointerCapture(event.pointerId);
-      previewSeek(seconds);
-    });
-
-    durationBar.addEventListener("pointermove", (event) => {
-      if (row.dataset.seeking !== "true") return;
-      row.dataset.didDrag = "true";
-      const seconds = secondsFromPointer(event);
-      if (seconds !== null) previewSeek(seconds);
-    });
-
-    durationBar.addEventListener("pointerup", (event) => {
-      if (row.dataset.seeking !== "true") return;
-      row.dataset.seeking = "false";
-      if (durationBar.hasPointerCapture(event.pointerId)) durationBar.releasePointerCapture(event.pointerId);
-      const seconds = secondsFromPointer(event);
-      if (seconds !== null) commitSeek(seconds);
-    });
-
-    durationBar.addEventListener("pointercancel", () => {
-      row.dataset.seeking = "false";
-      updateMixer(song);
-    });
-
-    durationBar.addEventListener("keydown", (event) => {
-      const audio = audioById.get(song.id);
-      if (!audio || !Number.isFinite(audio.duration) || audio.duration <= 0) return;
-      const step = event.shiftKey ? 10 : 2;
-
-      if (event.key === "ArrowLeft") {
-        event.preventDefault();
-        commitSeek(audio.currentTime - step);
-      }
-
-      if (event.key === "ArrowRight") {
-        event.preventDefault();
-        commitSeek(audio.currentTime + step);
-      }
-    });
 
     volume.addEventListener("input", () => {
       const audio = audioById.get(song.id);
@@ -353,13 +264,9 @@
     row.querySelector(".mixer-output").textContent = `${percent}%`;
 
     const duration = Number.isFinite(audio.duration) ? audio.duration : 0;
-    const progress = duration ? (audio.currentTime / duration) * 1000 : 0;
+    const progress = duration ? (audio.currentTime / duration) * 100 : 0;
     const durationBar = row.querySelector(".duration-bar");
-    if (row.dataset.seeking !== "true") {
-      const clampedProgress = Math.min(1000, Math.max(0, progress));
-      durationBar.style.setProperty("--progress", `${clampedProgress / 10}%`);
-      durationBar.setAttribute("aria-valuenow", String(Math.round(clampedProgress)));
-    }
+    durationBar.style.setProperty("--progress", `${Math.min(100, Math.max(0, progress))}%`);
     row.querySelector(".duration-time").textContent = `${formatTime(audio.currentTime)} / ${formatTime(duration)}`;
   }
 
