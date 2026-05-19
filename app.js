@@ -1,5 +1,5 @@
 (function () {
-  const VERSION = "v0.5.0";
+  const VERSION = "v0.6.0";
   const scenes = Array.isArray(window.SHOW_CUES) ? window.SHOW_CUES : [];
   const songs = scenes.flatMap((scene) => scene.cues);
   const audioById = new Map();
@@ -286,6 +286,7 @@
     });
 
     els.nowPlaying.textContent = playing.length ? playing.map(songName).join(", ") : state.warning || "Nothing";
+    document.body.classList.toggle("is-playing", playing.length > 0);
 
     songs.forEach((song) => {
       const audio = audioById.get(song.id);
