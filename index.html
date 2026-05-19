@@ -16,61 +16,76 @@
     </header>
 
     <main class="page">
-      <section class="board" aria-label="Song board">
-        <section class="status" aria-label="Playback status">
-          <span><i class="live-dot" aria-hidden="true"></i>Now playing</span>
-          <strong id="nowPlaying">Nothing</strong>
-        </section>
-
-        <section class="controls" aria-label="Sound controls">
+      <aside class="cue-panel" aria-label="Cue list">
+        <header class="cue-panel-header">
+          <h2>Cues</h2>
           <button id="loadSounds" type="button">Load sounds</button>
-          <label>
-            <span>Volume</span>
-            <input id="masterVolume" type="range" min="0" max="100" value="85">
-            <output id="masterOutput">85%</output>
-          </label>
-        </section>
-
-        <section class="song-list" id="songList" aria-label="Song list"></section>
-      </section>
-
-      <aside class="mixer" aria-label="Live mixer">
-        <h2>Mixer</h2>
-        <p id="emptyMixer" class="empty-mixer">No sounds playing</p>
-        <section id="mixerList" class="mixer-list"></section>
+        </header>
+        <section class="song-list" id="songList"></section>
       </aside>
+
+      <section class="board" aria-label="Mixer board">
+        <header class="board-header">
+          <div>
+            <span class="board-label"><i class="live-dot" aria-hidden="true"></i>Now playing</span>
+            <strong id="nowPlaying">Nothing</strong>
+          </div>
+          <div class="board-meta" id="boardMeta"></div>
+        </header>
+
+        <div class="mixer-board">
+          <div class="channels" id="mixerList"></div>
+          <p id="emptyMixer" class="empty-mixer">No active cues</p>
+
+          <div class="master-strip">
+            <div class="strip-title">Master</div>
+            <div class="fader-shell">
+              <div class="fader-track">
+                <div class="fader-fill" id="masterFill"></div>
+              </div>
+              <input id="masterVolume" class="fader-input" type="range" min="0" max="100" value="85" aria-label="Master volume">
+            </div>
+            <output id="masterOutput" class="strip-output">85</output>
+            <div class="strip-unit">dB</div>
+          </div>
+        </div>
+      </section>
     </main>
 
     <template id="songTemplate">
       <article class="song-row">
         <div class="song-info">
           <strong class="song-title"></strong>
+          <span class="song-moment"></span>
         </div>
         <div class="song-actions">
-          <button class="play-button" type="button">Play</button>
-          <button class="fade-in-button" type="button">Fade in</button>
-          <button class="loop-button" type="button" aria-pressed="false">Loop</button>
-          <button class="fade-button" type="button">Fade out</button>
-          <button class="stop-button" type="button">Stop</button>
+          <button class="play-button" type="button" aria-label="Play">▶ Play</button>
+          <div class="song-secondary">
+            <button class="fade-in-button" type="button">Fade in</button>
+            <button class="loop-button" type="button" aria-pressed="false">Loop</button>
+            <button class="fade-button" type="button">Fade out</button>
+            <button class="stop-button" type="button">Stop</button>
+          </div>
         </div>
       </article>
     </template>
 
     <template id="mixerTemplate">
-      <article class="mixer-row">
-        <strong class="mixer-title"></strong>
-        <div class="duration">
-          <div class="duration-bar" aria-label="Track position">
-            <span class="duration-fill"></span>
-            <span class="duration-handle"></span>
-          </div>
-          <span class="duration-time">0:00 / 0:00</span>
+      <article class="channel-strip">
+        <div class="strip-title"></div>
+        <div class="strip-time">0:00 / 0:00</div>
+        <div class="strip-meter">
+          <div class="strip-meter-fill"></div>
         </div>
-        <label>
-          <span>Volume</span>
-          <input class="mixer-volume" type="range" min="0" max="100" value="0">
-          <output class="mixer-output">0%</output>
-        </label>
+        <div class="fader-shell">
+          <div class="fader-track">
+            <div class="fader-fill"></div>
+          </div>
+          <input class="fader-input mixer-volume" type="range" min="0" max="100" value="0" aria-label="Channel volume">
+        </div>
+        <output class="strip-output mixer-output">0</output>
+        <div class="strip-unit">dB</div>
+        <button class="strip-stop" type="button" aria-label="Stop channel">■</button>
       </article>
     </template>
 
