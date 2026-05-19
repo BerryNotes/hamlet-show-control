@@ -1,5 +1,5 @@
 (function () {
-  const VERSION = "v0.4.0";
+  const VERSION = "v0.4.1";
   const scenes = Array.isArray(window.SHOW_CUES) ? window.SHOW_CUES : [];
   const songs = scenes.flatMap((scene) => scene.cues);
   const audioById = new Map();
@@ -50,12 +50,38 @@
     updateMixer(song);
   }
 
+  function fixInfiniteDuration(audio, song) {
+    if (audio.dataset.durationFixed === "true") return;
+    if (Number.isFinite(audio.duration) && audio.duration > 0) {
+      audio.dataset.durationFixed = "true";
+      return;
+    }
+    if (!audio.paused) return;
+    audio.dataset.durationFixed = "pending";
+    const onSeeked = () => {
+      audio.removeEventListener("seeked", onSeeked);
+      audio.currentTime = 0;
+      audio.dataset.durationFixed = "true";
+      updateMixer(song);
+    };
+    audio.addEventListener("seeked", onSeeked);
+    try {
+      audio.currentTime = 24 * 60 * 60;
+    } catch (error) {
+      audio.removeEventListener("seeked", onSeeked);
+    }
+  }
+
   function getAudio(song) {
     if (!audioById.has(song.id)) {
       const audio = new Audio(song.file);
       audio.preload = "auto";
       audio.loop = state.looping.has(song.id);
-      audio.addEventListener("loadedmetadata", () => updateMixer(song));
+      audio.addEventListener("loadedmetadata", () => {
+        fixInfiniteDuration(audio, song);
+        updateMixer(song);
+      });
+      audio.addEventListener("durationchange", () => updateMixer(song));
       audio.addEventListener("timeupdate", () => updateMixer(song));
       audio.addEventListener("seeked", () => updateMixer(song));
       audio.addEventListener("ended", syncStatus);
