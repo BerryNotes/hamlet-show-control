@@ -622,8 +622,8 @@ body.is-playing .live-dot {
 
 .fader-input {
   position: relative;
-  appearance: slider-vertical;
-  -webkit-appearance: slider-vertical;
+  appearance: none;
+  -webkit-appearance: none;
   writing-mode: vertical-lr;
   direction: rtl;
   width: 36px;
@@ -631,23 +631,28 @@ body.is-playing .live-dot {
   background: transparent;
   margin: 0;
   z-index: 2;
+  padding: 0;
 }
 
 .fader-input::-webkit-slider-runnable-track {
   background: transparent;
   width: 4px;
+  border: none;
 }
 
 .fader-input::-moz-range-track {
   background: transparent;
   width: 4px;
+  border: none;
 }
 
 /* fader cap — white plastic with center line */
 .fader-input::-webkit-slider-thumb {
+  -webkit-appearance: none;
   appearance: none;
   width: 30px;
   height: 22px;
+  margin-top: 0;
   border-radius: 3px;
   background:
     linear-gradient(180deg, #f4f1ea 0%, #d4cfc4 48%, #b8b3a6 50%, #e0dccf 52%, #c4bdac 100%);
