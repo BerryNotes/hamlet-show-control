@@ -653,7 +653,7 @@ body.is-playing .live-dot {
   width: 30px;
   height: 22px;
   margin-top: 0;
-  margin-left: -20px;
+  margin-left: -10px;
   border-radius: 3px;
   background:
     linear-gradient(180deg, #f0d28a 0%, #d6b260 48%, #a8853f 50%, #e5c378 52%, #b89653 100%);
