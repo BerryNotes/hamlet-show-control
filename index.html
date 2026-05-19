@@ -37,15 +37,23 @@
           <div class="channels" id="mixerList"></div>
           <p id="emptyMixer" class="empty-mixer">No active cues</p>
 
-          <div class="master-strip">
-            <div class="strip-title">Master</div>
-            <div class="fader-shell">
-              <div class="fader-track">
-                <div class="fader-fill" id="masterFill"></div>
+          <div class="channel-strip master-strip">
+            <div class="scribble"><span class="scribble-name">Master</span></div>
+            <div class="channel-num">OUT</div>
+            <div class="strip-body">
+              <div class="vu-meter stereo" aria-hidden="true">
+                <div class="vu-col"><div class="vu-fill" id="masterMeterL"></div></div>
+                <div class="vu-col"><div class="vu-fill" id="masterMeterR"></div></div>
               </div>
-              <input id="masterVolume" class="fader-input" type="range" min="0" max="100" value="85" aria-label="Master volume">
+              <div class="fader-shell">
+                <div class="fader-track"><div class="fader-fill" id="masterFill"></div></div>
+                <input id="masterVolume" class="fader-input" type="range" min="0" max="100" value="85" aria-label="Master volume">
+              </div>
+              <div class="fader-scale" aria-hidden="true">
+                <span>+5</span><span>0</span><span>-10</span><span>-20</span><span>∞</span>
+              </div>
             </div>
-            <output id="masterOutput" class="strip-output">85</output>
+            <output id="masterOutput" class="strip-readout">85</output>
             <div class="strip-unit">dB</div>
           </div>
         </div>
@@ -72,20 +80,27 @@
 
     <template id="mixerTemplate">
       <article class="channel-strip">
-        <div class="strip-title"></div>
-        <div class="strip-time">0:00 / 0:00</div>
-        <div class="strip-meter">
-          <div class="strip-meter-fill"></div>
-        </div>
-        <div class="fader-shell">
-          <div class="fader-track">
-            <div class="fader-fill"></div>
+        <div class="scribble"><span class="scribble-name"></span></div>
+        <div class="channel-num"></div>
+        <div class="strip-body">
+          <div class="vu-meter" aria-hidden="true">
+            <div class="vu-col"><div class="vu-fill"></div></div>
           </div>
-          <input class="fader-input mixer-volume" type="range" min="0" max="100" value="0" aria-label="Channel volume">
+          <div class="fader-shell">
+            <div class="fader-track"><div class="fader-fill"></div></div>
+            <input class="fader-input" type="range" min="0" max="100" value="0" aria-label="Channel volume">
+          </div>
+          <div class="fader-scale" aria-hidden="true">
+            <span>+5</span><span>0</span><span>-10</span><span>-20</span><span>∞</span>
+          </div>
         </div>
-        <output class="strip-output mixer-output">0</output>
+        <output class="strip-readout">0</output>
         <div class="strip-unit">dB</div>
-        <button class="strip-stop" type="button" aria-label="Stop channel">■</button>
+        <div class="strip-time">0:00 / 0:00</div>
+        <div class="strip-buttons">
+          <button class="strip-mute" type="button" aria-pressed="false">MUTE</button>
+          <button class="strip-stop" type="button">STOP</button>
+        </div>
       </article>
     </template>
 

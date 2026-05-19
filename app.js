@@ -1,5 +1,5 @@
 (function () {
-  const VERSION = "v0.7.0";
+  const VERSION = "v0.8.0";
   const scenes = Array.isArray(window.SHOW_CUES) ? window.SHOW_CUES : [];
   const songs = scenes.flatMap((scene) => scene.cues);
   const audioById = new Map();
@@ -25,6 +25,8 @@
     master: document.querySelector("#masterVolume"),
     masterOutput: document.querySelector("#masterOutput"),
     masterFill: document.querySelector("#masterFill"),
+    masterMeterL: document.querySelector("#masterMeterL"),
+    masterMeterR: document.querySelector("#masterMeterR"),
     load: document.querySelector("#loadSounds"),
     stopAll: document.querySelector("#stopAll")
   };
@@ -50,6 +52,7 @@
     state.levels.set(song.id, Math.min(1, Math.max(0, level)));
     applyOutputVolume(song);
     updateMixer(song);
+    updateMasterMeter();
   }
 
   function fixInfiniteDuration(audio, song) {
@@ -238,15 +241,26 @@
     const fragment = els.mixerTemplate.content.cloneNode(true);
     const strip = fragment.querySelector(".channel-strip");
     const volume = strip.querySelector(".fader-input");
-    const output = strip.querySelector(".strip-output");
+    const output = strip.querySelector(".strip-readout");
+    const muteBtn = strip.querySelector(".strip-mute");
 
-    strip.querySelector(".strip-title").textContent = songName(song);
+    strip.querySelector(".scribble-name").textContent = songName(song);
+    strip.querySelector(".channel-num").textContent = `CH ${song.id}`;
 
     volume.addEventListener("input", () => {
       const audio = audioById.get(song.id);
       if (!audio) return;
       setSongLevel(song, Number(volume.value) / 100);
       output.textContent = volume.value;
+    });
+
+    muteBtn.addEventListener("click", () => {
+      const audio = audioById.get(song.id);
+      if (!audio) return;
+      const next = !audio.muted;
+      audio.muted = next;
+      muteBtn.setAttribute("aria-pressed", String(next));
+      updateMixer(song);
     });
 
     strip.querySelector(".strip-stop").addEventListener("click", () => {
@@ -266,16 +280,32 @@
     const audio = audioById.get(song.id);
     if (!strip || !audio) return;
 
-    const percent = Math.round(songLevel(song) * 100);
-    strip.querySelector(".fader-input").value = String(percent);
-    strip.querySelector(".strip-output").textContent = String(percent);
-    strip.querySelector(".fader-fill").style.setProperty("--level", `${percent}%`);
+    const faderPct = Math.round(songLevel(song) * 100);
+    strip.querySelector(".fader-input").value = String(faderPct);
+    strip.querySelector(".strip-readout").textContent = String(faderPct);
+    strip.querySelector(".fader-fill").style.setProperty("--level", `${faderPct}%`);
+
+    const outLevel = audio.muted ? 0 : songLevel(song) * state.master;
+    const meterPct = Math.min(100, Math.max(0, outLevel * 100));
+    const vuFill = strip.querySelector(".vu-fill");
+    if (vuFill) vuFill.style.setProperty("--level", `${meterPct}%`);
 
     const duration = Number.isFinite(audio.duration) ? audio.duration : 0;
-    const progress = duration ? (audio.currentTime / duration) * 100 : 0;
-    const meter = strip.querySelector(".strip-meter-fill");
-    if (meter) meter.style.setProperty("--progress", `${Math.min(100, Math.max(0, progress))}%`);
     strip.querySelector(".strip-time").textContent = `${formatTime(audio.currentTime)} / ${formatTime(duration)}`;
+  }
+
+  function updateMasterMeter() {
+    let sum = 0;
+    mixerById.forEach((_strip, songId) => {
+      const song = songs.find((s) => s.id === songId);
+      const audio = audioById.get(songId);
+      if (!song || !audio || audio.paused || audio.muted) return;
+      sum += songLevel(song);
+    });
+    const level = Math.min(1, sum * state.master);
+    const pct = level * 100;
+    if (els.masterMeterL) els.masterMeterL.style.setProperty("--level", `${pct}%`);
+    if (els.masterMeterR) els.masterMeterR.style.setProperty("--level", `${pct}%`);
   }
 
   function removeMixer(song) {
@@ -308,6 +338,7 @@
       if (isPlaying) updateMixer(song);
       else removeMixer(song);
     });
+    updateMasterMeter();
   }
 
   function renderSongs() {
@@ -350,6 +381,7 @@
     els.masterOutput.textContent = els.master.value;
     updateMasterFill();
     syncVolumes();
+    updateMasterMeter();
   });
   updateMasterFill();
 
