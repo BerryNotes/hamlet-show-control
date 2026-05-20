@@ -1,5 +1,5 @@
 (function () {
-  const VERSION = "v0.8.9";
+  const VERSION = "v0.9.0";
   const scenes = Array.isArray(window.SHOW_CUES) ? window.SHOW_CUES : [];
   const songs = scenes.flatMap((scene) => scene.cues);
   const audioById = new Map();
@@ -233,6 +233,20 @@
     return `${minutes}:${wholeSeconds}`;
   }
 
+  function toggleLoop(song, force) {
+    const shouldLoop = typeof force === "boolean" ? force : !state.looping.has(song.id);
+    if (shouldLoop) state.looping.add(song.id);
+    else state.looping.delete(song.id);
+
+    const audio = audioById.get(song.id);
+    if (audio) audio.loop = shouldLoop;
+
+    const row = rowById.get(song.id);
+    if (row) row.querySelector(".loop-button")?.setAttribute("aria-pressed", String(shouldLoop));
+    const strip = mixerById.get(song.id);
+    if (strip) strip.querySelector(".strip-loop")?.setAttribute("aria-pressed", String(shouldLoop));
+  }
+
   function ensureMixer(song) {
     if (mixerById.has(song.id)) return mixerById.get(song.id);
 
@@ -240,10 +254,12 @@
     const strip = fragment.querySelector(".channel-strip");
     const volume = strip.querySelector(".fader-input");
     const output = strip.querySelector(".strip-readout");
-    const muteBtn = strip.querySelector(".strip-mute");
+    const loopBtn = strip.querySelector(".strip-loop");
+    const fadeBtn = strip.querySelector(".strip-fade");
 
     strip.querySelector(".scribble-name").textContent = songName(song);
     strip.querySelector(".channel-num").textContent = `CH ${song.id}`;
+    loopBtn.setAttribute("aria-pressed", String(state.looping.has(song.id)));
 
     volume.addEventListener("input", () => {
       const audio = audioById.get(song.id);
@@ -252,14 +268,8 @@
       output.textContent = volume.value;
     });
 
-    muteBtn.addEventListener("click", () => {
-      const audio = audioById.get(song.id);
-      if (!audio) return;
-      const next = !audio.muted;
-      audio.muted = next;
-      muteBtn.setAttribute("aria-pressed", String(next));
-      updateMixer(song);
-    });
+    loopBtn.addEventListener("click", () => toggleLoop(song));
+    fadeBtn.addEventListener("click", () => fadeSong(song));
 
     strip.querySelector(".strip-stop").addEventListener("click", () => {
       stopSong(song);
@@ -349,16 +359,7 @@
       if (momentEl) momentEl.textContent = song.moment || "";
       row.querySelector(".play-button").addEventListener("click", () => playSong(song));
       row.querySelector(".fade-in-button").addEventListener("click", () => fadeInSong(song));
-      row.querySelector(".loop-button").addEventListener("click", (event) => {
-        const shouldLoop = !state.looping.has(song.id);
-        if (shouldLoop) state.looping.add(song.id);
-        else state.looping.delete(song.id);
-
-        const audio = audioById.get(song.id);
-        if (audio) audio.loop = shouldLoop;
-
-        event.currentTarget.setAttribute("aria-pressed", String(shouldLoop));
-      });
+      row.querySelector(".loop-button").addEventListener("click", () => toggleLoop(song));
       row.querySelector(".fade-button").addEventListener("click", () => fadeSong(song));
       row.querySelector(".stop-button").addEventListener("click", () => {
         stopSong(song);

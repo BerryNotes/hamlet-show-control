@@ -778,34 +778,47 @@ body.is-playing .live-dot {
 .strip-buttons {
   display: grid;
   grid-template-columns: 1fr 1fr;
+  grid-auto-rows: auto;
   gap: 4px;
 }
 
-.strip-mute,
+.strip-loop,
+.strip-fade,
 .strip-stop {
-  min-height: 26px;
+  min-height: 24px;
   padding: 0;
   border: 1px solid;
   border-radius: 3px;
-  font-size: 0.6rem;
+  font-size: 0.58rem;
   font-weight: 800;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.1em;
   font-family: "Inter", monospace;
 }
 
-.strip-mute {
-  background: linear-gradient(180deg, #3a3530, #25221d);
-  border-color: #4a4238;
-  color: #c4b89f;
+.strip-loop {
+  grid-column: 1 / -1;
+  min-height: 22px;
+  font-size: 0.56rem;
+  background: linear-gradient(180deg, #2c2820, #1c1812);
+  border-color: #443d2c;
+  color: var(--text-dim);
+  box-shadow: 0 1px 0 rgba(255,255,255,0.04) inset, 0 1px 2px rgba(0,0,0,0.5);
+}
+.strip-loop:hover { background: linear-gradient(180deg, #38322a, #221c15); }
+.strip-loop[aria-pressed="true"] {
+  background: linear-gradient(180deg, #4a3d22, #2e2614);
+  border-color: var(--gold);
+  color: var(--gold-bright);
+  box-shadow: 0 0 6px rgba(200,165,90,0.4), 0 1px 0 rgba(255,235,180,0.2) inset;
+}
+
+.strip-fade {
+  background: linear-gradient(180deg, #2d3540, #232934);
+  border-color: #3a4452;
+  color: #c0c8d4;
   box-shadow: 0 1px 0 rgba(255,255,255,0.05) inset, 0 1px 2px rgba(0,0,0,0.5);
 }
-.strip-mute:hover { background: linear-gradient(180deg, #44403a, #2c2925); }
-.strip-mute[aria-pressed="true"] {
-  background: linear-gradient(180deg, #f4d35e, #c19f3d);
-  border-color: #8a6e1f;
-  color: #1f1a08;
-  box-shadow: 0 0 8px rgba(244, 211, 94, 0.5), 0 1px 0 rgba(255,255,255,0.4) inset;
-}
+.strip-fade:hover { background: linear-gradient(180deg, #38424f, #2a3140); }
 
 .strip-stop {
   background: linear-gradient(180deg, #4a2a2c, #3a2024);
