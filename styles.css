@@ -221,9 +221,11 @@ h1 {
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);
   background: var(--panel-2);
-  padding: 12px;
+  padding: 8px 10px;
   display: grid;
-  gap: 10px;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+  gap: 8px 10px;
   transition: border-color 180ms ease, background 180ms ease;
   position: relative;
 }
@@ -231,7 +233,7 @@ h1 {
 .song-row::before {
   content: "";
   position: absolute;
-  left: -1px; top: 10px; bottom: 10px;
+  left: -1px; top: 8px; bottom: 8px;
   width: 3px;
   border-radius: 999px;
   background: transparent;
@@ -249,35 +251,23 @@ h1 {
   box-shadow: 0 0 8px rgba(159, 201, 122, 0.5);
 }
 
-.song-info { min-width: 0; }
-
-.song-info strong {
-  display: block;
+.song-title {
+  min-width: 0;
   font-family: "Cormorant Garamond", "Times New Roman", serif;
   font-weight: 600;
-  font-size: 1.2rem;
+  font-size: 1.1rem;
   letter-spacing: 0;
-  line-height: 1.15;
+  line-height: 1.1;
   color: var(--text);
-}
-
-.song-moment {
-  display: block;
-  margin-top: 2px;
-  color: var(--muted);
-  font-size: 0.74rem;
-  line-height: 1.35;
-}
-
-.song-actions {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 6px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .play-button {
-  width: 100%;
-  min-height: 38px;
+  min-width: 40px;
+  min-height: 30px;
+  padding: 0 10px;
   border-color: #4a6e34;
   background: linear-gradient(180deg, #a8d381, #7fb058);
   color: #0f1a08;
@@ -289,15 +279,16 @@ h1 {
 .play-button:hover { background: linear-gradient(180deg, #b8e08c, #8fc063); border-color: #5a8042; }
 
 .song-secondary {
+  grid-column: 1 / -1;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 4px;
 }
 
 .song-secondary button {
-  min-height: 32px;
+  min-height: 28px;
   padding: 0 4px;
-  font-size: 0.66rem;
+  font-size: 0.62rem;
   font-weight: 700;
   letter-spacing: 0.06em;
   text-transform: uppercase;

@@ -1,5 +1,5 @@
 (function () {
-  const VERSION = "v0.9.4";
+  const VERSION = "v0.9.5";
   const scenes = Array.isArray(window.SHOW_CUES) ? window.SHOW_CUES : [];
   const songs = scenes.flatMap((scene) => scene.cues);
   const audioById = new Map();
@@ -477,8 +477,6 @@
       const row = fragment.querySelector(".song-row");
 
       row.querySelector(".song-title").textContent = songName(song);
-      const momentEl = row.querySelector(".song-moment");
-      if (momentEl) momentEl.textContent = song.moment || "";
       row.querySelector(".play-button").addEventListener("click", () => playSong(song));
       row.querySelector(".fade-in-button").addEventListener("click", () => fadeInSong(song));
       row.querySelector(".loop-button").addEventListener("click", () => toggleLoop(song));
