@@ -78,6 +78,17 @@ window.SHOW_CUES = [
         fadeIn: 8,
         fadeOut: 6,
         loop: false
+      },
+      {
+        id: "8",
+        moment: "Lag tuna cue for Hamlet.",
+        action: "Play Lag Tuna",
+        track: "Lag Tuna",
+        file: "assets/audio/lag-tuna.m4a",
+        volume: 80,
+        fadeIn: 8,
+        fadeOut: 6,
+        loop: false
       }
     ]
   }
