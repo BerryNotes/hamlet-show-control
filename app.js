@@ -1,5 +1,5 @@
 (function () {
-  const VERSION = "v0.9.2";
+  const VERSION = "v0.9.3";
   const scenes = Array.isArray(window.SHOW_CUES) ? window.SHOW_CUES : [];
   const songs = scenes.flatMap((scene) => scene.cues);
   const audioById = new Map();
@@ -123,28 +123,28 @@
   }
 
   function tickMeters() {
-    let active = false;
+    let anyPlaying = false;
 
     graphById.forEach((graph, songId) => {
       const audio = audioById.get(songId);
       const strip = mixerById.get(songId);
       const playing = audio && !audio.paused && !audio.ended;
+      if (playing) anyPlaying = true;
       const rms = playing ? rmsFromAnalyser(graph.analyser, graph.data) : 0;
       graph.level = meterPercent(rms, graph.level);
-      if (graph.level > 0.5) active = true;
       const vuFill = strip && strip.querySelector(".vu-fill");
       if (vuFill) vuFill.style.setProperty("--level", `${graph.level}%`);
     });
 
     if (masterAnalyser) {
-      const rms = rmsFromAnalyser(masterAnalyser, masterData);
+      const rms = anyPlaying ? rmsFromAnalyser(masterAnalyser, masterData) : 0;
       masterMeterLevel = meterPercent(rms, masterMeterLevel);
-      if (masterMeterLevel > 0.5) active = true;
       if (els.masterMeterL) els.masterMeterL.style.setProperty("--level", `${masterMeterLevel}%`);
       if (els.masterMeterR) els.masterMeterR.style.setProperty("--level", `${masterMeterLevel}%`);
     }
 
-    if (active) {
+    // keep the loop alive while anything plays, plus a tail for decay
+    if (anyPlaying || masterMeterLevel > 0.5) {
       meterRaf = requestAnimationFrame(tickMeters);
     } else {
       meterRaf = 0;
