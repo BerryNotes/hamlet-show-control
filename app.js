@@ -1,5 +1,5 @@
 (function () {
-  const VERSION = "v0.9.1";
+  const VERSION = "v0.9.2";
   const scenes = Array.isArray(window.SHOW_CUES) ? window.SHOW_CUES : [];
   const songs = scenes.flatMap((scene) => scene.cues);
   const audioById = new Map();
@@ -13,6 +13,15 @@
     levels: new Map(),
     ramps: new Map()
   };
+
+  // Web Audio analysis graph (built lazily on first play)
+  let audioCtx = null;
+  let masterGain = null;
+  let masterAnalyser = null;
+  let masterData = null;
+  let masterMeterLevel = 0;
+  const graphById = new Map();
+  let meterRaf = 0;
 
   const els = {
     list: document.querySelector("#songList"),
@@ -42,9 +51,108 @@
     return state.levels.get(song.id) ?? defaultSongLevel(song);
   }
 
+  function ensureAudioContext() {
+    if (audioCtx) return audioCtx;
+    const Ctx = window.AudioContext || window.webkitAudioContext;
+    if (!Ctx) return null;
+    audioCtx = new Ctx();
+    masterGain = audioCtx.createGain();
+    masterGain.gain.value = state.master;
+    masterAnalyser = audioCtx.createAnalyser();
+    masterAnalyser.fftSize = 512;
+    masterData = new Uint8Array(masterAnalyser.fftSize);
+    masterGain.connect(masterAnalyser);
+    masterAnalyser.connect(audioCtx.destination);
+    return audioCtx;
+  }
+
+  function ensureGraph(song) {
+    if (graphById.has(song.id)) return graphById.get(song.id);
+    if (!ensureAudioContext()) return null;
+    const audio = audioById.get(song.id);
+    if (!audio) return null;
+
+    let source;
+    try {
+      source = audioCtx.createMediaElementSource(audio);
+    } catch (error) {
+      return null;
+    }
+
+    const gain = audioCtx.createGain();
+    gain.gain.value = songLevel(song);
+    const analyser = audioCtx.createAnalyser();
+    analyser.fftSize = 512;
+    const data = new Uint8Array(analyser.fftSize);
+
+    source.connect(gain);
+    gain.connect(analyser);
+    analyser.connect(masterGain);
+
+    audio.volume = 1;
+    const graph = { source, gain, analyser, data, level: 0 };
+    graphById.set(song.id, graph);
+    return graph;
+  }
+
   function applyOutputVolume(song) {
     const audio = audioById.get(song.id);
-    if (audio) audio.volume = Math.min(1, Math.max(0, songLevel(song) * state.master));
+    if (!audio) return;
+    const graph = graphById.get(song.id);
+    if (graph) {
+      graph.gain.gain.value = Math.min(1, Math.max(0, songLevel(song)));
+    } else {
+      audio.volume = Math.min(1, Math.max(0, songLevel(song) * state.master));
+    }
+  }
+
+  function rmsFromAnalyser(analyser, data) {
+    analyser.getByteTimeDomainData(data);
+    let sum = 0;
+    for (let i = 0; i < data.length; i++) {
+      const v = (data[i] - 128) / 128;
+      sum += v * v;
+    }
+    return Math.sqrt(sum / data.length);
+  }
+
+  // map rms (~0..0.7) to a lively 0..100 meter with fast attack, slow release
+  function meterPercent(rms, prev) {
+    const target = Math.min(100, rms * 320);
+    return target > prev ? target : prev * 0.82 + target * 0.18;
+  }
+
+  function tickMeters() {
+    let active = false;
+
+    graphById.forEach((graph, songId) => {
+      const audio = audioById.get(songId);
+      const strip = mixerById.get(songId);
+      const playing = audio && !audio.paused && !audio.ended;
+      const rms = playing ? rmsFromAnalyser(graph.analyser, graph.data) : 0;
+      graph.level = meterPercent(rms, graph.level);
+      if (graph.level > 0.5) active = true;
+      const vuFill = strip && strip.querySelector(".vu-fill");
+      if (vuFill) vuFill.style.setProperty("--level", `${graph.level}%`);
+    });
+
+    if (masterAnalyser) {
+      const rms = rmsFromAnalyser(masterAnalyser, masterData);
+      masterMeterLevel = meterPercent(rms, masterMeterLevel);
+      if (masterMeterLevel > 0.5) active = true;
+      if (els.masterMeterL) els.masterMeterL.style.setProperty("--level", `${masterMeterLevel}%`);
+      if (els.masterMeterR) els.masterMeterR.style.setProperty("--level", `${masterMeterLevel}%`);
+    }
+
+    if (active) {
+      meterRaf = requestAnimationFrame(tickMeters);
+    } else {
+      meterRaf = 0;
+    }
+  }
+
+  function startMeters() {
+    if (!meterRaf) meterRaf = requestAnimationFrame(tickMeters);
   }
 
   function setSongLevel(song, level) {
@@ -133,6 +241,13 @@
     requestAnimationFrame(step);
   }
 
+  function prepareAudioOutput(song) {
+    ensureGraph(song);
+    if (audioCtx && audioCtx.state === "suspended") audioCtx.resume();
+    applyOutputVolume(song);
+    startMeters();
+  }
+
   async function playSong(song) {
     const audio = getAudio(song);
     cancelRamp(song.id);
@@ -141,6 +256,7 @@
     audio.loop = state.looping.has(song.id);
     setSongLevel(song, defaultSongLevel(song));
     ensureMixer(song);
+    prepareAudioOutput(song);
 
     try {
       await audio.play();
@@ -163,6 +279,7 @@
     setSongLevel(song, startLevel);
     ensureMixer(song);
     updateMixer(song);
+    prepareAudioOutput(song);
 
     try {
       if (audio.paused) await audio.play();
@@ -293,25 +410,30 @@
     strip.querySelector(".strip-readout").textContent = String(faderPct);
     strip.querySelector(".fader-fill").style.setProperty("--level", `${faderPct}%`);
 
-    const outLevel = audio.muted ? 0 : songLevel(song) * state.master;
-    const meterPct = Math.min(100, Math.max(0, outLevel * 100));
-    const vuFill = strip.querySelector(".vu-fill");
-    if (vuFill) vuFill.style.setProperty("--level", `${meterPct}%`);
+    // VU meter is driven live by tickMeters (real audio level) once Web
+    // Audio is running. Before that, show the static post-fader level.
+    if (!audioCtx) {
+      const meterPct = Math.min(100, Math.max(0, songLevel(song) * state.master * 100));
+      const vuFill = strip.querySelector(".vu-fill");
+      if (vuFill) vuFill.style.setProperty("--level", `${meterPct}%`);
+    }
 
     const duration = Number.isFinite(audio.duration) ? audio.duration : 0;
     strip.querySelector(".strip-time").textContent = `${formatTime(audio.currentTime)} / ${formatTime(duration)}`;
   }
 
   function updateMasterMeter() {
+    // Once Web Audio is running the master meter is driven live by
+    // tickMeters; this static estimate is only the pre-audio fallback.
+    if (audioCtx) return;
     let sum = 0;
     mixerById.forEach((_strip, songId) => {
       const song = songs.find((s) => s.id === songId);
       const audio = audioById.get(songId);
-      if (!song || !audio || audio.paused || audio.muted) return;
+      if (!song || !audio || audio.paused) return;
       sum += songLevel(song);
     });
-    const level = Math.min(1, sum * state.master);
-    const pct = level * 100;
+    const pct = Math.min(1, sum * state.master) * 100;
     if (els.masterMeterL) els.masterMeterL.style.setProperty("--level", `${pct}%`);
     if (els.masterMeterR) els.masterMeterR.style.setProperty("--level", `${pct}%`);
   }
@@ -379,7 +501,8 @@
     state.master = Number(els.master.value) / 100;
     els.masterOutput.textContent = els.master.value;
     updateMasterFill();
-    syncVolumes();
+    if (masterGain) masterGain.gain.value = state.master;
+    else syncVolumes();
     updateMasterMeter();
   });
   updateMasterFill();
