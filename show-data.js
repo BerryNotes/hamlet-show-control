@@ -89,6 +89,28 @@ window.SHOW_CUES = [
         fadeIn: 8,
         fadeOut: 6,
         loop: false
+      },
+      {
+        id: "9",
+        moment: "Funeral scene underscoring.",
+        action: "Play Funeral",
+        track: "Funeral",
+        file: "assets/audio/funeral.mp3",
+        volume: 80,
+        fadeIn: 8,
+        fadeOut: 6,
+        loop: false
+      },
+      {
+        id: "10",
+        moment: "Alternate Ophelia cue.",
+        action: "Play Ophelia #2",
+        track: "Ophelia #2",
+        file: "assets/audio/ophelia-2.mp3",
+        volume: 80,
+        fadeIn: 8,
+        fadeOut: 6,
+        loop: false
       }
     ]
   }
