@@ -1,5 +1,5 @@
 (function () {
-  const VERSION = "v0.9.8";
+  const VERSION = "v0.9.9";
   const scenes = Array.isArray(window.SHOW_CUES) ? window.SHOW_CUES : [];
   const songs = scenes.flatMap((scene) => scene.cues);
   const audioById = new Map();
@@ -100,7 +100,11 @@
     if (!audio) return;
     const graph = graphById.get(song.id);
     if (graph) {
-      graph.gain.gain.value = Math.min(1, Math.max(0, songLevel(song)));
+      // A fade owns the gain node while it runs; don't fight its automation.
+      if (state.ramps.has(song.id)) return;
+      const v = Math.min(1, Math.max(0, songLevel(song)));
+      if (audioCtx) graph.gain.gain.cancelScheduledValues(audioCtx.currentTime);
+      graph.gain.gain.value = v;
     } else {
       audio.volume = Math.min(1, Math.max(0, songLevel(song) * state.master));
     }
@@ -135,6 +139,15 @@
       graph.level = meterPercent(rms, graph.level);
       const vuFill = strip && strip.querySelector(".vu-fill");
       if (vuFill) vuFill.style.setProperty("--level", `${graph.level}%`);
+
+      // While a fade is automating the gain node, animate the on-screen
+      // fader to track it (the audio fade itself runs on the audio thread).
+      if (strip && state.ramps.has(songId)) {
+        const pct = Math.round(Math.min(1, Math.max(0, graph.gain.gain.value)) * 100);
+        strip.querySelector(".fader-input").value = String(pct);
+        strip.querySelector(".strip-readout").textContent = String(pct);
+        strip.querySelector(".fader-fill").style.setProperty("--level", `${pct}%`);
+      }
     });
 
     if (masterAnalyser) {
@@ -207,10 +220,23 @@
 
   function cancelRamp(songId) {
     const existing = state.ramps.get(songId);
-    if (existing) existing.cancelled = true;
+    if (existing) {
+      existing.cancelled = true;
+      if (existing.timer) clearTimeout(existing.timer);
+      // Hold the gain node at its current value so it doesn't snap.
+      const graph = graphById.get(songId);
+      if (graph && audioCtx) {
+        const g = graph.gain.gain;
+        const now = audioCtx.currentTime;
+        const current = g.value;
+        g.cancelScheduledValues(now);
+        g.setValueAtTime(current, now);
+      }
+    }
     state.ramps.delete(songId);
   }
 
+  // rAF ramp — fallback only when Web Audio is unavailable.
   function startRamp(song, from, to, seconds, onUpdate, done) {
     cancelRamp(song.id);
     const token = { cancelled: false };
@@ -240,6 +266,45 @@
     };
 
     requestAnimationFrame(step);
+  }
+
+  // Fade using native gain-node automation when possible, so the fade
+  // runs on the audio thread and is unaffected by tab backgrounding /
+  // requestAnimationFrame throttling. Falls back to the rAF ramp.
+  function fade(song, to, seconds, onComplete) {
+    cancelRamp(song.id);
+    const graph = graphById.get(song.id);
+    const from = songLevel(song);
+    const clampedTo = Math.min(1, Math.max(0, to));
+
+    if (graph && audioCtx) {
+      const g = graph.gain.gain;
+      const now = audioCtx.currentTime;
+      const safeFrom = Math.max(0.0001, from);
+      const safeTo = Math.max(0.0001, clampedTo);
+      g.cancelScheduledValues(now);
+      g.setValueAtTime(safeFrom, now);
+      if (seconds > 0) g.linearRampToValueAtTime(safeTo, now + seconds);
+      else g.setValueAtTime(clampedTo, now);
+
+      state.levels.set(song.id, clampedTo);
+
+      const token = { cancelled: false, timer: 0 };
+      state.ramps.set(song.id, token);
+      token.timer = setTimeout(() => {
+        if (token.cancelled) return;
+        state.ramps.delete(song.id);
+        g.cancelScheduledValues(audioCtx.currentTime);
+        g.value = clampedTo;
+        updateMixer(song);
+        if (onComplete) onComplete();
+      }, Math.max(0, seconds) * 1000 + 80);
+
+      startMeters();
+      updateMixer(song);
+    } else {
+      startRamp(song, from, clampedTo, seconds, (level) => setSongLevel(song, level), onComplete);
+    }
   }
 
   function prepareAudioOutput(song) {
@@ -272,20 +337,21 @@
   async function fadeInSong(song) {
     const audio = getAudio(song);
     cancelRamp(song.id);
-    const startLevel = audio.paused ? 0 : songLevel(song);
-    if (audio.paused) {
+    const wasPaused = audio.paused;
+    const startLevel = wasPaused ? 0 : songLevel(song);
+    if (wasPaused) {
       audio.currentTime = 0;
       audio.loop = state.looping.has(song.id);
     }
     setSongLevel(song, startLevel);
     ensureMixer(song);
-    updateMixer(song);
     prepareAudioOutput(song);
+    updateMixer(song);
 
     try {
-      if (audio.paused) await audio.play();
+      if (wasPaused) await audio.play();
       state.warning = "";
-      startRamp(song, startLevel, defaultSongLevel(song), song.fadeIn || 4, (level) => setSongLevel(song, level), syncStatus);
+      fade(song, defaultSongLevel(song), song.fadeIn || 4, syncStatus);
     } catch (error) {
       state.warning = `Could not play ${songName(song)}`;
     }
@@ -298,7 +364,7 @@
     if (!audio || audio.paused) return;
 
     ensureMixer(song);
-    startRamp(song, songLevel(song), 0, song.fadeOut ?? 5, (level) => setSongLevel(song, level), () => {
+    fade(song, 0, song.fadeOut ?? 5, () => {
       audio.pause();
       audio.currentTime = 0;
       state.levels.delete(song.id);
@@ -406,10 +472,14 @@
     const audio = audioById.get(song.id);
     if (!strip || !audio) return;
 
-    const faderPct = Math.round(songLevel(song) * 100);
-    strip.querySelector(".fader-input").value = String(faderPct);
-    strip.querySelector(".strip-readout").textContent = String(faderPct);
-    strip.querySelector(".fader-fill").style.setProperty("--level", `${faderPct}%`);
+    // During a fade the gain is automated; tickMeters animates the fader
+    // from the live gain value, so don't overwrite it here.
+    if (!state.ramps.has(song.id)) {
+      const faderPct = Math.round(songLevel(song) * 100);
+      strip.querySelector(".fader-input").value = String(faderPct);
+      strip.querySelector(".strip-readout").textContent = String(faderPct);
+      strip.querySelector(".fader-fill").style.setProperty("--level", `${faderPct}%`);
+    }
 
     // VU meter is driven live by tickMeters (real audio level) once Web
     // Audio is running. Before that, show the static post-fader level.
@@ -511,6 +581,13 @@
   document.addEventListener("keydown", (event) => {
     if (event.target.matches("input")) return;
     if (event.key === "Escape") stopAll();
+  });
+
+  // Resume the audio context if the browser suspended it while hidden.
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden && audioCtx && audioCtx.state === "suspended") {
+      audioCtx.resume();
+    }
   });
 
   // Stop OS/hardware media keys (play/pause, next, etc.) from resuming
