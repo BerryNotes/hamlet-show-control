@@ -88,6 +88,17 @@ window.SHOW_CUES = [
         fadeIn: 8,
         fadeOut: 6,
         loop: false
+      },
+      {
+        id: "8",
+        moment: "Act III cue.",
+        action: "Play Lag Tuna",
+        track: "Lag Tuna",
+        file: "assets/audio/lag-tuna.m4a",
+        volume: 80,
+        fadeIn: 8,
+        fadeOut: 6,
+        loop: false
       }
     ]
   },
@@ -129,20 +140,4 @@ window.SHOW_CUES = [
       }
     ]
   },
-  {
-    scene: "Act V",
-    cues: [
-      {
-        id: "8",
-        moment: "Scene I — churchyard cue.",
-        action: "Play Lag Tuna",
-        track: "Lag Tuna",
-        file: "assets/audio/lag-tuna.m4a",
-        volume: 80,
-        fadeIn: 8,
-        fadeOut: 6,
-        loop: false
-      }
-    ]
-  }
 ];
