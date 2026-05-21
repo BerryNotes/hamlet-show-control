@@ -1,5 +1,5 @@
 (function () {
-  const VERSION = "v0.9.7";
+  const VERSION = "v0.9.8";
   const scenes = Array.isArray(window.SHOW_CUES) ? window.SHOW_CUES : [];
   const songs = scenes.flatMap((scene) => scene.cues);
   const audioById = new Map();
@@ -512,6 +512,21 @@
     if (event.target.matches("input")) return;
     if (event.key === "Escape") stopAll();
   });
+
+  // Stop OS/hardware media keys (play/pause, next, etc.) from resuming
+  // our paused audio elements behind the operator's back.
+  if ("mediaSession" in navigator) {
+    [
+      "play", "pause", "stop", "seekto", "seekbackward",
+      "seekforward", "previoustrack", "nexttrack"
+    ].forEach((action) => {
+      try {
+        navigator.mediaSession.setActionHandler(action, () => {});
+      } catch (error) {
+        /* unsupported action — ignore */
+      }
+    });
+  }
 
   const versionEl = document.querySelector("#version");
   if (versionEl) versionEl.textContent = VERSION;
