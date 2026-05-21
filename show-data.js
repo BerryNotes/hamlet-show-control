@@ -1,6 +1,6 @@
 window.SHOW_CUES = [
   {
-    scene: "Current Songs",
+    scene: "Songs",
     cues: [
       {
         id: "1",
@@ -13,6 +13,77 @@ window.SHOW_CUES = [
         fadeOut: 6,
         loop: false
       },
+      {
+        id: "5",
+        moment: "Use for court scenes and formal palace moments.",
+        action: "Play court song",
+        track: "Court Song",
+        file: "assets/audio/court-song.mp3",
+        volume: 80,
+        fadeIn: 8,
+        fadeOut: 6,
+        loop: false
+      },
+      {
+        id: "6",
+        moment: "Use for Ophelia moments.",
+        action: "Play Ophelia #1",
+        track: "Ophelia #1",
+        file: "assets/audio/ophelia.mp3",
+        volume: 80,
+        fadeIn: 8,
+        fadeOut: 6,
+        loop: false
+      },
+      {
+        id: "10",
+        moment: "Alternate Ophelia cue.",
+        action: "Play Ophelia #2",
+        track: "Ophelia #2",
+        file: "assets/audio/ophelia-2.mp3",
+        volume: 80,
+        fadeIn: 8,
+        fadeOut: 6,
+        loop: false
+      },
+      {
+        id: "9",
+        moment: "Funeral scene underscoring.",
+        action: "Play Funeral",
+        track: "Funeral",
+        file: "assets/audio/funeral.mp3",
+        volume: 80,
+        fadeIn: 8,
+        fadeOut: 6,
+        loop: false
+      },
+      {
+        id: "7",
+        moment: "Use between acts or for scene-change underscoring.",
+        action: "Play interlude",
+        track: "Interlude",
+        file: "assets/audio/interlude.mp3",
+        volume: 80,
+        fadeIn: 8,
+        fadeOut: 6,
+        loop: false
+      },
+      {
+        id: "8",
+        moment: "Lag tuna cue for Hamlet.",
+        action: "Play Lag Tuna",
+        track: "Lag Tuna",
+        file: "assets/audio/lag-tuna.m4a",
+        volume: 80,
+        fadeIn: 8,
+        fadeOut: 6,
+        loop: false
+      }
+    ]
+  },
+  {
+    scene: "Cues",
+    cues: [
       {
         id: "2",
         moment: "Use for the platform scenes and any quiet night atmosphere.",
@@ -47,72 +118,6 @@ window.SHOW_CUES = [
         loop: false
       },
       {
-        id: "5",
-        moment: "Use for court scenes and formal palace moments.",
-        action: "Play court song",
-        track: "Court Song",
-        file: "assets/audio/court-song.mp3",
-        volume: 80,
-        fadeIn: 8,
-        fadeOut: 6,
-        loop: false
-      },
-      {
-        id: "6",
-        moment: "Use for Ophelia moments.",
-        action: "Play Ophelia #1",
-        track: "Ophelia #1",
-        file: "assets/audio/ophelia.mp3",
-        volume: 80,
-        fadeIn: 8,
-        fadeOut: 6,
-        loop: false
-      },
-      {
-        id: "7",
-        moment: "Use between acts or for scene-change underscoring.",
-        action: "Play interlude",
-        track: "Interlude",
-        file: "assets/audio/interlude.mp3",
-        volume: 80,
-        fadeIn: 8,
-        fadeOut: 6,
-        loop: false
-      },
-      {
-        id: "8",
-        moment: "Lag tuna cue for Hamlet.",
-        action: "Play Lag Tuna",
-        track: "Lag Tuna",
-        file: "assets/audio/lag-tuna.m4a",
-        volume: 80,
-        fadeIn: 8,
-        fadeOut: 6,
-        loop: false
-      },
-      {
-        id: "9",
-        moment: "Funeral scene underscoring.",
-        action: "Play Funeral",
-        track: "Funeral",
-        file: "assets/audio/funeral.mp3",
-        volume: 80,
-        fadeIn: 8,
-        fadeOut: 6,
-        loop: false
-      },
-      {
-        id: "10",
-        moment: "Alternate Ophelia cue.",
-        action: "Play Ophelia #2",
-        track: "Ophelia #2",
-        file: "assets/audio/ophelia-2.mp3",
-        volume: 80,
-        fadeIn: 8,
-        fadeOut: 6,
-        loop: false
-      },
-      {
         id: "11",
         moment: "Rooster crow / dawn cue.",
         action: "Play Rooster",
@@ -126,4 +131,3 @@ window.SHOW_CUES = [
     ]
   }
 ];
-

@@ -1,5 +1,5 @@
 (function () {
-  const VERSION = "v0.9.11";
+  const VERSION = "v0.10.0";
   const scenes = Array.isArray(window.SHOW_CUES) ? window.SHOW_CUES : [];
   const songs = scenes.flatMap((scene) => scene.cues);
   const audioById = new Map();
@@ -543,22 +543,31 @@
   }
 
   function renderSongs() {
-    songs.forEach((song) => {
-      const fragment = els.template.content.cloneNode(true);
-      const row = fragment.querySelector(".song-row");
+    scenes.forEach((scene) => {
+      if (scene.scene) {
+        const heading = document.createElement("h2");
+        heading.className = "section-heading";
+        heading.textContent = scene.scene;
+        els.list.append(heading);
+      }
 
-      row.querySelector(".song-title").textContent = songName(song);
-      row.querySelector(".play-button").addEventListener("click", () => playSong(song));
-      row.querySelector(".fade-in-button").addEventListener("click", () => fadeInSong(song));
-      row.querySelector(".loop-button").addEventListener("click", () => toggleLoop(song));
-      row.querySelector(".fade-button").addEventListener("click", () => fadeSong(song));
-      row.querySelector(".stop-button").addEventListener("click", () => {
-        stopSong(song);
-        syncStatus();
+      (scene.cues || []).forEach((song) => {
+        const fragment = els.template.content.cloneNode(true);
+        const row = fragment.querySelector(".song-row");
+
+        row.querySelector(".song-title").textContent = songName(song);
+        row.querySelector(".play-button").addEventListener("click", () => playSong(song));
+        row.querySelector(".fade-in-button").addEventListener("click", () => fadeInSong(song));
+        row.querySelector(".loop-button").addEventListener("click", () => toggleLoop(song));
+        row.querySelector(".fade-button").addEventListener("click", () => fadeSong(song));
+        row.querySelector(".stop-button").addEventListener("click", () => {
+          stopSong(song);
+          syncStatus();
+        });
+
+        rowById.set(song.id, row);
+        els.list.append(fragment);
       });
-
-      rowById.set(song.id, row);
-      els.list.append(fragment);
     });
   }
 

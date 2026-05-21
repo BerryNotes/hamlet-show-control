@@ -217,6 +217,21 @@ h1 {
 .song-list::-webkit-scrollbar { width: 8px; }
 .song-list::-webkit-scrollbar-thumb { background: var(--panel-3); border-radius: 999px; }
 
+.section-heading {
+  margin: 4px 2px 2px;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--line);
+  color: var(--gold);
+  font-family: "Cormorant Garamond", "Times New Roman", serif;
+  font-weight: 600;
+  font-size: 1.35rem;
+  letter-spacing: 0.01em;
+}
+
+.section-heading:not(:first-child) {
+  margin-top: 14px;
+}
+
 .song-row {
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);
