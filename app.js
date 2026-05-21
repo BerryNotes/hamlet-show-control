@@ -1,5 +1,5 @@
 (function () {
-  const VERSION = "v0.9.6";
+  const VERSION = "v0.9.7";
   const scenes = Array.isArray(window.SHOW_CUES) ? window.SHOW_CUES : [];
   const songs = scenes.flatMap((scene) => scene.cues);
   const audioById = new Map();
@@ -116,9 +116,10 @@
     return Math.sqrt(sum / data.length);
   }
 
-  // map rms (~0..0.7) to a lively 0..100 meter with fast attack, slow release
+  // map rms (~0..0.7) to a lively 0..100 meter with fast attack, slow
+  // release. sqrt curve lifts quiet passages so the meter sits higher.
   function meterPercent(rms, prev) {
-    const target = Math.min(100, rms * 320);
+    const target = Math.min(100, Math.sqrt(rms) * 150);
     return target > prev ? target : prev * 0.82 + target * 0.18;
   }
 
