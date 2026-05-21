@@ -60,8 +60,8 @@ window.SHOW_CUES = [
       {
         id: "6",
         moment: "Use for Ophelia moments.",
-        action: "Play Ophelia",
-        track: "Ophelia",
+        action: "Play Ophelia #1",
+        track: "Ophelia #1",
         file: "assets/audio/ophelia.mp3",
         volume: 80,
         fadeIn: 8,
@@ -110,6 +110,17 @@ window.SHOW_CUES = [
         volume: 80,
         fadeIn: 8,
         fadeOut: 6,
+        loop: false
+      },
+      {
+        id: "11",
+        moment: "Rooster crow / dawn cue.",
+        action: "Play Rooster",
+        track: "Rooster",
+        file: "assets/audio/rooster.mp3",
+        volume: 80,
+        fadeIn: 2,
+        fadeOut: 2,
         loop: false
       }
     ]
