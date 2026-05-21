@@ -108,9 +108,9 @@ window.SHOW_CUES = [
       {
         id: "7",
         moment: "Intermission underscoring.",
-        action: "Play interlude",
-        track: "Interlude",
-        file: "assets/audio/interlude.mp3",
+        action: "Play intermission",
+        track: "Intermission",
+        file: "assets/audio/intermission.mp3",
         volume: 80,
         fadeIn: 8,
         fadeOut: 6,
