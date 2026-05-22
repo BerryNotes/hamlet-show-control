@@ -101,6 +101,28 @@ button:active { transform: translateY(1px); }
   opacity: 0.6;
 }
 
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.brand-skull {
+  width: 46px;
+  height: 46px;
+  flex: 0 0 auto;
+  filter: drop-shadow(0 0 10px rgba(200, 165, 90, 0.35));
+}
+
+.tagline {
+  margin: 4px 0 0;
+  color: var(--text-dim);
+  font-family: "Cormorant Garamond", "Times New Roman", serif;
+  font-style: italic;
+  font-size: 1rem;
+  letter-spacing: 0.01em;
+}
+
 .eyebrow {
   margin: 0 0 6px;
   color: var(--gold);
@@ -416,6 +438,28 @@ body.is-playing .live-dot {
   padding: 22px 22px 26px;
   background:
     radial-gradient(ellipse 60% 80% at 50% 100%, rgba(200, 165, 90, 0.04), transparent 70%);
+}
+
+.board-skull {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: min(46%, 360px);
+  transform: translate(-50%, -50%);
+  opacity: 0.045;
+  pointer-events: none;
+  z-index: 0;
+  filter: grayscale(0.2);
+}
+
+.channels,
+.channel-strip.master-strip {
+  position: relative;
+  z-index: 1;
+}
+
+.empty-mixer {
+  z-index: 1;
 }
 
 .channels {

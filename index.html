@@ -9,9 +9,13 @@
   </head>
   <body>
     <header class="topbar">
-      <div>
-        <p class="eyebrow">Hamlet <span id="version" class="version"></span></p>
-        <h1>Music Board</h1>
+      <div class="brand">
+        <img class="brand-skull" src="skull-mark.svg" alt="" aria-hidden="true">
+        <div>
+          <p class="eyebrow">Hamlet &middot; Elsinore <span id="version" class="version"></span></p>
+          <h1>Music Board</h1>
+          <p class="tagline">&ldquo;The play&rsquo;s the thing.&rdquo;</p>
+        </div>
       </div>
       <button id="stopAll" class="stop-all" type="button">STOP ALL</button>
     </header>
@@ -31,8 +35,9 @@
         </header>
 
         <div class="mixer-board">
+          <img class="board-skull" src="skull-mark.svg" alt="" aria-hidden="true">
           <div class="channels" id="mixerList"></div>
-          <p id="emptyMixer" class="empty-mixer">No active cues</p>
+          <p id="emptyMixer" class="empty-mixer">The rest is silence.</p>
 
           <div class="channel-strip master-strip">
             <div class="scribble"><span class="scribble-name">Master</span></div>

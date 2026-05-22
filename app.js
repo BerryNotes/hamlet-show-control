@@ -1,5 +1,5 @@
 (function () {
-  const VERSION = "v0.11.4";
+  const VERSION = "v0.12.0";
   const scenes = Array.isArray(window.SHOW_CUES) ? window.SHOW_CUES : [];
   const songs = scenes.flatMap((scene) => scene.cues);
   const audioById = new Map();
@@ -524,7 +524,7 @@
       return audio && !audio.paused && !audio.ended;
     });
 
-    els.nowPlaying.textContent = playing.length ? playing.map(songName).join(", ") : state.warning || "Nothing";
+    els.nowPlaying.textContent = playing.length ? playing.map(songName).join(", ") : state.warning || "The rest is silence.";
     document.body.classList.toggle("is-playing", playing.length > 0);
     if (els.boardMeta) {
       els.boardMeta.textContent = playing.length
