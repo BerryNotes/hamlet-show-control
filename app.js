@@ -1,5 +1,5 @@
 (function () {
-  const VERSION = "v0.13.0";
+  const VERSION = "v0.14.0";
   const scenes = Array.isArray(window.SHOW_CUES) ? window.SHOW_CUES : [];
   const songs = scenes.flatMap((scene) => scene.cues);
   const audioById = new Map();
@@ -327,6 +327,7 @@
     setSongLevel(song, defaultSongLevel(song));
     ensureMixer(song);
     prepareAudioOutput(song);
+    flashCue(song);
 
     try {
       await audio.play();
@@ -351,6 +352,7 @@
     ensureMixer(song);
     prepareAudioOutput(song);
     updateMixer(song);
+    flashCue(song);
 
     try {
       if (wasPaused) await audio.play();
@@ -615,6 +617,15 @@
     moveStandby(1);
   }
 
+  function flashCue(song) {
+    const row = rowById.get(song.id);
+    if (!row) return;
+    row.classList.remove("just-fired");
+    void row.offsetWidth; // restart the animation
+    row.classList.add("just-fired");
+    setTimeout(() => row.classList.remove("just-fired"), 750);
+  }
+
   function updateMasterFill() {
     if (els.masterFill) els.masterFill.style.setProperty("--level", `${els.master.value}%`);
   }
@@ -681,6 +692,30 @@
 
   const versionEl = document.querySelector("#version");
   if (versionEl) versionEl.textContent = VERSION;
+
+  // Rotating Hamlet epigraphs in the tagline (skipped if reduced motion).
+  const taglineEl = document.querySelector("#tagline");
+  const reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  if (taglineEl && !reduceMotion) {
+    const quotes = [
+      "The play’s the thing.",
+      "To be, or not to be.",
+      "Though this be madness, yet there is method in’t.",
+      "Brevity is the soul of wit.",
+      "What a piece of work is a man.",
+      "Alas, poor Yorick.",
+      "The rest is silence."
+    ];
+    let qi = 0;
+    setInterval(() => {
+      qi = (qi + 1) % quotes.length;
+      taglineEl.classList.add("is-fading");
+      setTimeout(() => {
+        taglineEl.textContent = "“" + quotes[qi] + "”";
+        taglineEl.classList.remove("is-fading");
+      }, 600);
+    }, 7000);
+  }
 
   renderSongs();
   loadSounds();
