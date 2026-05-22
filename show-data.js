@@ -10,7 +10,7 @@ window.SHOW_CUES = [
         file: "assets/audio/overture.mp3",
         volume: 80,
         fadeIn: 8,
-        fadeOut: 6,
+        fadeOut: 3,
         loop: false
       },
       {
@@ -21,7 +21,7 @@ window.SHOW_CUES = [
         file: "assets/audio/midnight-bells.mp3",
         volume: 80,
         fadeIn: 8,
-        fadeOut: 6,
+        fadeOut: 3,
         loop: false
       }
     ]
@@ -37,7 +37,7 @@ window.SHOW_CUES = [
         file: "assets/audio/cricket-chirps.mp3",
         volume: 80,
         fadeIn: 8,
-        fadeOut: 5,
+        fadeOut: 3,
         loop: false
       },
       {
@@ -48,7 +48,7 @@ window.SHOW_CUES = [
         file: "assets/audio/ghost-noise.mp3",
         volume: 80,
         fadeIn: 8,
-        fadeOut: 5,
+        fadeOut: 3,
         loop: false
       },
       {
@@ -70,7 +70,7 @@ window.SHOW_CUES = [
         file: "assets/audio/court-song.mp3",
         volume: 80,
         fadeIn: 8,
-        fadeOut: 6,
+        fadeOut: 3,
         loop: false
       }
     ]
@@ -86,7 +86,7 @@ window.SHOW_CUES = [
         file: "assets/audio/ophelia-2.mp3",
         volume: 80,
         fadeIn: 8,
-        fadeOut: 6,
+        fadeOut: 3,
         loop: false
       },
       {
@@ -97,7 +97,7 @@ window.SHOW_CUES = [
         file: "assets/audio/lag-tuna.m4a",
         volume: 80,
         fadeIn: 8,
-        fadeOut: 6,
+        fadeOut: 3,
         loop: false
       }
     ]
@@ -113,7 +113,7 @@ window.SHOW_CUES = [
         file: "assets/audio/intermission.mp3",
         volume: 80,
         fadeIn: 8,
-        fadeOut: 6,
+        fadeOut: 3,
         loop: false
       },
       {
@@ -124,7 +124,7 @@ window.SHOW_CUES = [
         file: "assets/audio/ophelia.mp3",
         volume: 80,
         fadeIn: 8,
-        fadeOut: 6,
+        fadeOut: 3,
         loop: false
       },
       {
@@ -135,7 +135,7 @@ window.SHOW_CUES = [
         file: "assets/audio/funeral.mp3",
         volume: 80,
         fadeIn: 8,
-        fadeOut: 6,
+        fadeOut: 3,
         loop: false
       }
     ]
