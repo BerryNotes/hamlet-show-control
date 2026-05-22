@@ -1,5 +1,5 @@
 (function () {
-  const VERSION = "v0.12.0";
+  const VERSION = "v0.13.0";
   const scenes = Array.isArray(window.SHOW_CUES) ? window.SHOW_CUES : [];
   const songs = scenes.flatMap((scene) => scene.cues);
   const audioById = new Map();
@@ -36,8 +36,12 @@
     masterFill: document.querySelector("#masterFill"),
     masterMeterL: document.querySelector("#masterMeterL"),
     masterMeterR: document.querySelector("#masterMeterR"),
-    stopAll: document.querySelector("#stopAll")
+    stopAll: document.querySelector("#stopAll"),
+    goButton: document.querySelector("#goButton"),
+    standbyName: document.querySelector("#standbyName")
   };
+
+  state.standbyIndex = songs.length ? 0 : -1;
 
   function songName(song) {
     return song.track || song.action || song.id;
@@ -565,10 +569,50 @@
           syncStatus();
         });
 
+        // Click anywhere on the card (not a button) to arm it as standby.
+        row.addEventListener("click", (event) => {
+          if (event.target.closest("button")) return;
+          setStandby(songs.indexOf(song));
+        });
+
         rowById.set(song.id, row);
         els.list.append(fragment);
       });
     });
+  }
+
+  function setStandby(index) {
+    if (!songs.length) {
+      state.standbyIndex = -1;
+    } else {
+      state.standbyIndex = Math.min(songs.length - 1, Math.max(0, index));
+    }
+    updateStandbyView();
+  }
+
+  function moveStandby(delta) {
+    if (!songs.length) return;
+    const base = state.standbyIndex < 0 ? 0 : state.standbyIndex + delta;
+    setStandby(base);
+  }
+
+  function updateStandbyView() {
+    songs.forEach((song, i) => {
+      rowById.get(song.id)?.classList.toggle("is-standby", i === state.standbyIndex);
+    });
+    const song = songs[state.standbyIndex];
+    if (els.standbyName) els.standbyName.textContent = song ? songName(song) : "—";
+    if (els.goButton) els.goButton.disabled = !song;
+    if (song) {
+      rowById.get(song.id)?.scrollIntoView({ block: "nearest" });
+    }
+  }
+
+  function fireStandby() {
+    const song = songs[state.standbyIndex];
+    if (!song) return;
+    playSong(song);
+    moveStandby(1);
   }
 
   function updateMasterFill() {
@@ -586,10 +630,31 @@
   updateMasterFill();
 
   els.stopAll.addEventListener("click", stopAll);
+  if (els.goButton) els.goButton.addEventListener("click", fireStandby);
 
   document.addEventListener("keydown", (event) => {
-    if (event.target.matches("input")) return;
-    if (event.key === "Escape") stopAll();
+    if (event.target.matches("input, textarea, select")) return;
+
+    if (event.key === "Escape") {
+      stopAll();
+      return;
+    }
+
+    // Show-control transport: Space fires the armed cue, arrows move it.
+    if (event.key === " " || event.code === "Space") {
+      event.preventDefault();
+      fireStandby();
+      return;
+    }
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      moveStandby(1);
+      return;
+    }
+    if (event.key === "ArrowUp") {
+      event.preventDefault();
+      moveStandby(-1);
+    }
   });
 
   // Resume the audio context if the browser suspended it while hidden.
@@ -620,4 +685,5 @@
   renderSongs();
   loadSounds();
   syncStatus();
+  updateStandbyView();
 })();
