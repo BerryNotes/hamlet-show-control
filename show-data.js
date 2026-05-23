@@ -4,7 +4,7 @@ window.SHOW_CUES = [
     cues: [
       {
         id: "1",
-        moment: "Opening / curtain music.",
+        moment: "Top of show — opening music.",
         action: "Play overture",
         track: "Overture",
         file: "assets/audio/overture.mp3",
@@ -14,8 +14,8 @@ window.SHOW_CUES = [
         loop: false
       },
       {
-        id: "4",
-        moment: "Midnight bells, straight after the overture.",
+        id: "2",
+        moment: "Straight after the overture — bells toll midnight.",
         action: "Play bells",
         track: "Midnight Bells",
         file: "assets/audio/midnight-bells.mp3",
@@ -30,19 +30,19 @@ window.SHOW_CUES = [
     scene: "Act I",
     cues: [
       {
-        id: "2",
-        moment: "Scene I — the platform, night atmosphere.",
+        id: "3",
+        moment: "Sc I — platform, night. Fade in & loop.",
         action: "Play crickets",
         track: "Cricket Chirps",
         file: "assets/audio/cricket-chirps.mp3",
         volume: 80,
         fadeIn: 8,
         fadeOut: 3,
-        loop: false
+        loop: true
       },
       {
-        id: "3",
-        moment: "Scene I — the Ghost appears.",
+        id: "4",
+        moment: "Sc I — the Ghost first appears.",
         action: "Play ghost noise",
         track: "Ghost Noise",
         file: "assets/audio/ghost-noise.mp3",
@@ -52,8 +52,8 @@ window.SHOW_CUES = [
         loop: false
       },
       {
-        id: "11",
-        moment: "Scene I — the cock crows, Ghost exits.",
+        id: "5",
+        moment: "Sc I — the cock crows, Ghost exits.",
         action: "Play Rooster",
         track: "Rooster",
         file: "assets/audio/rooster.mp3",
@@ -63,8 +63,57 @@ window.SHOW_CUES = [
         loop: false
       },
       {
-        id: "5",
-        moment: "Scene II — court / room of state.",
+        id: "6",
+        moment: "Sc II — room of state, court assembles.",
+        action: "Play court song",
+        track: "Court Song",
+        file: "assets/audio/court-song.mp3",
+        volume: 80,
+        fadeIn: 8,
+        fadeOut: 3,
+        loop: false
+      },
+      {
+        id: "7",
+        moment: "Sc II — as Ophelia enters / King's first address.",
+        action: "Play Ophelia #1",
+        track: "Ophelia #1",
+        file: "assets/audio/ophelia-1.mp3",
+        volume: 80,
+        fadeIn: 8,
+        fadeOut: 3,
+        loop: false
+      },
+      {
+        id: "8",
+        moment: "Sc IV — the platform again, cold night.",
+        action: "Play crickets",
+        track: "Cricket Chirps",
+        file: "assets/audio/cricket-chirps.mp3",
+        volume: 80,
+        fadeIn: 8,
+        fadeOut: 3,
+        loop: true
+      },
+      {
+        id: "9",
+        moment: "Sc IV — Ghost enters, lights turn purple.",
+        action: "Play ghost noise",
+        track: "Ghost Noise",
+        file: "assets/audio/ghost-noise.mp3",
+        volume: 80,
+        fadeIn: 8,
+        fadeOut: 3,
+        loop: false
+      }
+    ]
+  },
+  {
+    scene: "Act II",
+    cues: [
+      {
+        id: "10",
+        moment: "Sc II — King & Queen receive Rosencrantz and Guildenstern.",
         action: "Play court song",
         track: "Court Song",
         file: "assets/audio/court-song.mp3",
@@ -79,8 +128,8 @@ window.SHOW_CUES = [
     scene: "Act III",
     cues: [
       {
-        id: "10",
-        moment: "Scene I — after the nunnery scene, Ophelia alone.",
+        id: "11",
+        moment: "Sc I — after the nunnery scene, Ophelia alone.",
         action: "Play Ophelia #2",
         track: "Ophelia #2",
         file: "assets/audio/ophelia-2.mp3",
@@ -90,11 +139,22 @@ window.SHOW_CUES = [
         loop: false
       },
       {
-        id: "8",
-        moment: "Act III cue.",
+        id: "12",
+        moment: "Sc III — Hamlet plays the harp.",
         action: "Play Lag Tuna",
         track: "Lag Tuna",
         file: "assets/audio/lag-tuna.m4a",
+        volume: 80,
+        fadeIn: 8,
+        fadeOut: 3,
+        loop: false
+      },
+      {
+        id: "13",
+        moment: "End of Act III — intermission.",
+        action: "Play intermission",
+        track: "Intermission",
+        file: "assets/audio/intermission.mp3",
         volume: 80,
         fadeIn: 8,
         fadeOut: 3,
@@ -106,32 +166,21 @@ window.SHOW_CUES = [
     scene: "Act IV",
     cues: [
       {
-        id: "7",
-        moment: "Intermission underscoring.",
-        action: "Play intermission",
-        track: "Intermission",
-        file: "assets/audio/intermission.mp3",
+        id: "14",
+        moment: "Sc V — after Ophelia's mad songs, led off.",
+        action: "Play Ophelia #3",
+        track: "Ophelia #3",
+        file: "assets/audio/ophelia-3.mp3",
         volume: 80,
         fadeIn: 8,
         fadeOut: 3,
         loop: false
       },
       {
-        id: "6",
-        moment: "Scene V — Ophelia's mad scene.",
-        action: "Play Ophelia #1",
-        track: "Ophelia #1",
-        file: "assets/audio/ophelia.mp3",
-        volume: 80,
-        fadeIn: 8,
-        fadeOut: 3,
-        loop: false
-      },
-      {
-        id: "9",
+        id: "15",
         moment: "End of Act IV — into the funeral.",
-        action: "Play Funeral",
-        track: "Funeral",
+        action: "Play Funeral #1",
+        track: "Funeral #1",
         file: "assets/audio/funeral.mp3",
         volume: 80,
         fadeIn: 8,
@@ -140,4 +189,31 @@ window.SHOW_CUES = [
       }
     ]
   },
+  {
+    scene: "Act V",
+    cues: [
+      {
+        id: "16",
+        moment: "Sc I — churchyard, after the grave is filled.",
+        action: "Play Funeral #2",
+        track: "Funeral #2",
+        file: "assets/audio/funeral-2.mp3",
+        volume: 80,
+        fadeIn: 8,
+        fadeOut: 3,
+        loop: false
+      },
+      {
+        id: "17",
+        moment: "Sc II — the final duel; music runs through the act.",
+        action: "Play Ophelia #4",
+        track: "Ophelia #4",
+        file: "assets/audio/ophelia-4.mp3",
+        volume: 80,
+        fadeIn: 8,
+        fadeOut: 3,
+        loop: false
+      }
+    ]
+  }
 ];
