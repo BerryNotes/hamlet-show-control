@@ -74,17 +74,6 @@ window.SHOW_CUES = [
         loop: false
       },
       {
-        id: "7",
-        moment: "Sc II — as Ophelia enters / King's first address.",
-        action: "Play Ophelia #1",
-        track: "Ophelia #1",
-        file: "assets/audio/ophelia-1.mp3",
-        volume: 80,
-        fadeIn: 8,
-        fadeOut: 3,
-        loop: false
-      },
-      {
         id: "8",
         moment: "Sc IV — the platform again, cold night.",
         action: "Play crickets",
