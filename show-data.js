@@ -103,9 +103,9 @@ window.SHOW_CUES = [
       {
         id: "10",
         moment: "Sc II — King & Queen receive Rosencrantz and Guildenstern.",
-        action: "Play court song",
-        track: "Court Song",
-        file: "assets/audio/court-song.mp3",
+        action: "Play Court #2",
+        track: "Court #2",
+        file: "assets/audio/court-2.mp3",
         volume: 80,
         fadeIn: 8,
         fadeOut: 3,
