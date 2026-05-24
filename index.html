@@ -52,13 +52,13 @@
               </div>
               <div class="fader-shell">
                 <div class="fader-track"><div class="fader-fill" id="masterFill"></div></div>
-                <input id="masterVolume" class="fader-input" type="range" min="0" max="100" value="85" aria-label="Master volume">
+                <input id="masterVolume" class="fader-input" type="range" min="-60" max="10" value="0" step="1" aria-label="Master volume">
               </div>
               <div class="fader-scale" aria-hidden="true">
-                <span>+5</span><span>0</span><span>-10</span><span>-20</span><span>∞</span>
+                <span>+10</span><span>0</span><span>-20</span><span>-40</span><span>∞</span>
               </div>
             </div>
-            <output id="masterOutput" class="strip-readout">85</output>
+            <output id="masterOutput" class="strip-readout">0</output>
             <div class="strip-unit">dB</div>
             <button id="boostToggle" class="boost-toggle" type="button" aria-pressed="true">BOOST</button>
           </div>

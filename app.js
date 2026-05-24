@@ -1,5 +1,5 @@
 (function () {
-  const VERSION = "v0.18.1";
+  const VERSION = "v0.19.0";
   const scenes = Array.isArray(window.SHOW_CUES) ? window.SHOW_CUES : [];
   const songs = scenes.flatMap((scene) => scene.cues);
   const audioById = new Map();
@@ -658,19 +658,35 @@
     setTimeout(() => row.classList.remove("just-fired"), 750);
   }
 
-  function updateMasterFill() {
-    if (els.masterFill) els.masterFill.style.setProperty("--level", `${els.master.value}%`);
+  function gainFromDb(db) {
+    return db <= Number(els.master.min) ? 0 : Math.pow(10, db / 20);
   }
 
-  els.master.addEventListener("input", () => {
-    state.master = Number(els.master.value) / 100;
-    els.masterOutput.textContent = els.master.value;
+  function formatDb(db) {
+    if (db <= Number(els.master.min)) return "−∞";
+    return db > 0 ? `+${db}` : String(db);
+  }
+
+  function updateMasterFill() {
+    if (!els.masterFill) return;
+    const min = Number(els.master.min);
+    const max = Number(els.master.max);
+    const pct = ((Number(els.master.value) - min) / (max - min)) * 100;
+    els.masterFill.style.setProperty("--level", `${pct}%`);
+  }
+
+  function applyMaster() {
+    const db = Number(els.master.value);
+    state.master = gainFromDb(db);
+    els.masterOutput.textContent = formatDb(db);
     updateMasterFill();
     if (masterGain) masterGain.gain.value = state.master;
     else syncVolumes();
     updateMasterMeter();
-  });
-  updateMasterFill();
+  }
+
+  els.master.addEventListener("input", applyMaster);
+  applyMaster();
 
   els.stopAll.addEventListener("click", stopAll);
   if (els.goButton) els.goButton.addEventListener("click", fireStandby);
