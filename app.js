@@ -1,5 +1,5 @@
 (function () {
-  const VERSION = "v0.17.0";
+  const VERSION = "v0.18.0";
   const scenes = Array.isArray(window.SHOW_CUES) ? window.SHOW_CUES : [];
   const songs = scenes.flatMap((scene) => scene.cues);
   const audioById = new Map();
@@ -11,7 +11,8 @@
     warning: "",
     looping: new Set(),
     levels: new Map(),
-    ramps: new Map()
+    ramps: new Map(),
+    boost: true
   };
 
   // Web Audio analysis graph (built lazily on first play)
@@ -20,6 +21,8 @@
   let masterAnalyser = null;
   let masterData = null;
   let masterMeterLevel = 0;
+  let masterComp = null;
+  let masterMakeup = null;
   const graphById = new Map();
   let meterRaf = 0;
 
@@ -37,6 +40,7 @@
     masterMeterL: document.querySelector("#masterMeterL"),
     masterMeterR: document.querySelector("#masterMeterR"),
     stopAll: document.querySelector("#stopAll"),
+    boostToggle: document.querySelector("#boostToggle"),
     goButton: document.querySelector("#goButton"),
     standbyName: document.querySelector("#standbyName")
   };
@@ -68,20 +72,34 @@
 
     // Master bus: compressor tames peaks + makeup gain lifts the average
     // loudness, so the show plays louder without clipping when cues overlap.
-    const comp = audioCtx.createDynamicsCompressor();
-    comp.threshold.value = -14;
-    comp.knee.value = 24;
-    comp.ratio.value = 6;
-    comp.attack.value = 0.003;
-    comp.release.value = 0.25;
-    const makeup = audioCtx.createGain();
-    makeup.gain.value = 1.9;
+    // The BOOST button toggles this on/off (see applyBoost).
+    masterComp = audioCtx.createDynamicsCompressor();
+    masterComp.attack.value = 0.003;
+    masterComp.release.value = 0.25;
+    masterMakeup = audioCtx.createGain();
 
-    masterGain.connect(comp);
-    comp.connect(makeup);
-    makeup.connect(masterAnalyser);
+    masterGain.connect(masterComp);
+    masterComp.connect(masterMakeup);
+    masterMakeup.connect(masterAnalyser);
     masterAnalyser.connect(audioCtx.destination);
+    applyBoost();
     return audioCtx;
+  }
+
+  function applyBoost() {
+    if (!masterComp || !masterMakeup) return;
+    if (state.boost) {
+      masterComp.threshold.value = -14;
+      masterComp.knee.value = 24;
+      masterComp.ratio.value = 6;
+      masterMakeup.gain.value = 1.9;
+    } else {
+      // Effectively flat: no compression, unity makeup.
+      masterComp.threshold.value = 0;
+      masterComp.knee.value = 0;
+      masterComp.ratio.value = 1;
+      masterMakeup.gain.value = 1;
+    }
   }
 
   function ensureGraph(song) {
@@ -656,6 +674,15 @@
 
   els.stopAll.addEventListener("click", stopAll);
   if (els.goButton) els.goButton.addEventListener("click", fireStandby);
+
+  if (els.boostToggle) {
+    els.boostToggle.setAttribute("aria-pressed", String(state.boost));
+    els.boostToggle.addEventListener("click", () => {
+      state.boost = !state.boost;
+      els.boostToggle.setAttribute("aria-pressed", String(state.boost));
+      applyBoost();
+    });
+  }
 
   document.addEventListener("keydown", (event) => {
     if (event.target.matches("input, textarea, select")) return;
