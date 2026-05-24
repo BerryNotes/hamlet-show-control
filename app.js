@@ -1,5 +1,5 @@
 (function () {
-  const VERSION = "v0.15.5";
+  const VERSION = "v0.16.0";
   const scenes = Array.isArray(window.SHOW_CUES) ? window.SHOW_CUES : [];
   const songs = scenes.flatMap((scene) => scene.cues);
   const audioById = new Map();
@@ -721,4 +721,21 @@
   loadSounds();
   syncStatus();
   updateStandbyView();
+
+  // Offline support: register the service worker and have it pre-cache
+  // every audio file so the board runs with no network (booth-wifi safe).
+  if ("serviceWorker" in navigator) {
+    const audioUrls = Array.from(new Set(songs.map((song) => song.file)));
+    const cacheAudio = () => {
+      if (navigator.serviceWorker.controller) {
+        navigator.serviceWorker.controller.postMessage({ type: "CACHE_AUDIO", urls: audioUrls });
+      }
+    };
+    window.addEventListener("load", () => {
+      navigator.serviceWorker.register("sw.js").then(() => {
+        cacheAudio();
+        navigator.serviceWorker.addEventListener("controllerchange", cacheAudio);
+      }).catch(() => { /* offline support unavailable — board still works online */ });
+    });
+  }
 })();

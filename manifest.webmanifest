@@ -1,0 +1,19 @@
+{
+  "name": "Hamlet Music Board",
+  "short_name": "Hamlet",
+  "description": "Show-control board for running music and SFX live during Hamlet.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "landscape",
+  "background_color": "#0a0908",
+  "theme_color": "#0a0908",
+  "icons": [
+    {
+      "src": "favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
