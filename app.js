@@ -1,5 +1,5 @@
 (function () {
-  const VERSION = "v0.16.2";
+  const VERSION = "v0.17.0";
   const scenes = Array.isArray(window.SHOW_CUES) ? window.SHOW_CUES : [];
   const songs = scenes.flatMap((scene) => scene.cues);
   const audioById = new Map();
@@ -65,7 +65,21 @@
     masterAnalyser = audioCtx.createAnalyser();
     masterAnalyser.fftSize = 512;
     masterData = new Uint8Array(masterAnalyser.fftSize);
-    masterGain.connect(masterAnalyser);
+
+    // Master bus: compressor tames peaks + makeup gain lifts the average
+    // loudness, so the show plays louder without clipping when cues overlap.
+    const comp = audioCtx.createDynamicsCompressor();
+    comp.threshold.value = -14;
+    comp.knee.value = 24;
+    comp.ratio.value = 6;
+    comp.attack.value = 0.003;
+    comp.release.value = 0.25;
+    const makeup = audioCtx.createGain();
+    makeup.gain.value = 1.9;
+
+    masterGain.connect(comp);
+    comp.connect(makeup);
+    makeup.connect(masterAnalyser);
     masterAnalyser.connect(audioCtx.destination);
     return audioCtx;
   }
