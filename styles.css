@@ -164,22 +164,18 @@ h1 {
   line-height: 1;
 }
 
-.topbar-actions {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
 .boost-toggle {
-  min-height: 62px;
-  padding: 0 18px;
+  width: 100%;
+  min-height: 26px;
+  margin-top: 2px;
+  padding: 0;
   border: 1px solid var(--line-strong);
-  border-radius: var(--radius);
+  border-radius: 3px;
   background: var(--panel-2);
   color: var(--muted);
-  font-size: 0.8rem;
+  font-size: 0.6rem;
   font-weight: 800;
-  letter-spacing: 0.18em;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
 }
 
@@ -187,7 +183,7 @@ h1 {
   border-color: var(--gold);
   background: linear-gradient(180deg, #4a3d22, #2e2614);
   color: var(--gold-bright);
-  box-shadow: 0 0 12px rgba(200, 165, 90, 0.35), 0 1px 0 rgba(255, 235, 180, 0.2) inset;
+  box-shadow: 0 0 8px rgba(200, 165, 90, 0.4), 0 1px 0 rgba(255, 235, 180, 0.2) inset;
 }
 
 .stop-all {
