@@ -1,5 +1,5 @@
 (function () {
-  const VERSION = "v0.22.1";
+  const VERSION = "v0.23.0";
   const scenes = Array.isArray(window.SHOW_CUES) ? window.SHOW_CUES : [];
   const songs = scenes.flatMap((scene) => scene.cues);
   const audioById = new Map();
@@ -26,6 +26,7 @@
   let masterMakeup = null;
   const graphById = new Map();
   let meterRaf = 0;
+  let wakeLock = null;
 
   const els = {
     list: document.querySelector("#songList"),
@@ -345,12 +346,23 @@
     }
   }
 
+  // Keep the screen awake during the show so the OS can't dim/sleep the
+  // display (which on many machines suspends audio or locks the booth).
+  function requestWakeLock() {
+    if (!("wakeLock" in navigator)) return;
+    navigator.wakeLock.request("screen").then((lock) => {
+      wakeLock = lock;
+      lock.addEventListener("release", () => { wakeLock = null; });
+    }).catch(() => { /* denied / unsupported — harmless */ });
+  }
+
   function prepareAudioOutput(song) {
     ensureGraph(song);
     if (audioCtx && audioCtx.state === "suspended") audioCtx.resume();
     applyOutputVolume(song);
     startMeters();
     state.showStarted = true;
+    if (!wakeLock) requestWakeLock();
   }
 
   // Only one song plays at a time. Starting a song stops any other
@@ -741,12 +753,24 @@
     }
   });
 
-  // Resume the audio context if the browser suspended it while hidden.
+  // Resume the audio context (and re-take the wake lock) when the tab
+  // becomes visible again — both can be dropped while hidden.
   document.addEventListener("visibilitychange", () => {
-    if (!document.hidden && audioCtx && audioCtx.state === "suspended") {
-      audioCtx.resume();
-    }
+    if (document.hidden) return;
+    if (audioCtx && audioCtx.state === "suspended") audioCtx.resume();
+    if (state.showStarted && !wakeLock) requestWakeLock();
   });
+
+  // Any tap/click also nudges a suspended context back to life (covers
+  // OS audio interruptions like a phone call or notification).
+  document.addEventListener("pointerdown", () => {
+    if (audioCtx && audioCtx.state === "suspended") audioCtx.resume();
+  });
+
+  // Last-resort resilience: never let a stray error or rejected promise
+  // tear down the running board — swallow it and keep going.
+  window.addEventListener("error", (event) => { event.preventDefault(); });
+  window.addEventListener("unhandledrejection", (event) => { event.preventDefault(); });
 
   // Once the show has started, guard against an accidental reload / tab
   // close / navigation taking the board down mid-performance.
