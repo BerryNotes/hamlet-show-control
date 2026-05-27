@@ -45,17 +45,6 @@ window.SHOW_CUES = [
         loop: true
       },
       {
-        id: "4",
-        moment: "Sc I — the Ghost first appears.",
-        action: "Play ghost noise",
-        track: "Ghost Noise",
-        file: "assets/audio/ghost-noise.mp3",
-        volume: 80,
-        fadeIn: 8,
-        fadeOut: 3,
-        loop: false
-      },
-      {
         id: "5",
         moment: "Sc I — the cock crows, Ghost exits.",
         action: "Play Rooster",
@@ -102,17 +91,6 @@ window.SHOW_CUES = [
         loop: true
       },
       {
-        id: "9",
-        moment: "Sc IV — Ghost enters, lights turn purple.",
-        action: "Play ghost noise",
-        track: "Ghost Noise",
-        file: "assets/audio/ghost-noise.mp3",
-        volume: 80,
-        fadeIn: 8,
-        fadeOut: 3,
-        loop: false
-      },
-      {
         id: "10",
         moment: "End of Sc V — close of Act I, lights down.",
         action: "Play Lag Tuna",
@@ -140,17 +118,6 @@ window.SHOW_CUES = [
         fadeOut: 3,
         loop: false,
         song: true
-      },
-      {
-        id: "12",
-        moment: "Sc IV — closet scene; the Ghost enters in lightning.",
-        action: "Play ghost noise",
-        track: "Ghost Noise",
-        file: "assets/audio/ghost-noise.mp3",
-        volume: 80,
-        fadeIn: 8,
-        fadeOut: 3,
-        loop: false
       },
       {
         id: "13",
@@ -216,7 +183,7 @@ window.SHOW_CUES = [
         action: "Play Finale",
         track: "Finale",
         file: "assets/audio/finale.mp3",
-        volume: 80,
+        volume: 70,
         fadeIn: 4,
         fadeOut: 0,
         loop: false,
