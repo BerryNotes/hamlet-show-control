@@ -1,5 +1,5 @@
 (function () {
-  const VERSION = "v0.20.0";
+  const VERSION = "v0.21.0";
   const scenes = Array.isArray(window.SHOW_CUES) ? window.SHOW_CUES : [];
   const songs = scenes.flatMap((scene) => scene.cues);
   const audioById = new Map();
@@ -12,7 +12,8 @@
     looping: new Set(),
     levels: new Map(),
     ramps: new Map(),
-    boost: true
+    boost: true,
+    showStarted: false
   };
 
   // Web Audio analysis graph (built lazily on first play)
@@ -310,13 +311,14 @@
   function fade(song, to, seconds, onComplete) {
     cancelRamp(song.id);
     const graph = graphById.get(song.id);
-    const from = songLevel(song);
     const clampedTo = Math.min(1, Math.max(0, to));
 
     if (graph && audioCtx) {
       const g = graph.gain.gain;
       const now = audioCtx.currentTime;
-      const safeFrom = Math.max(0.0001, from);
+      // Start from the channel's actual current gain so a fade-out begins
+      // wherever the fader is now, not from the cue's default level.
+      const safeFrom = Math.max(0.0001, g.value);
       const safeTo = Math.max(0.0001, clampedTo);
       g.cancelScheduledValues(now);
       g.setValueAtTime(safeFrom, now);
@@ -339,7 +341,7 @@
       startMeters();
       updateMixer(song);
     } else {
-      startRamp(song, from, clampedTo, seconds, (level) => setSongLevel(song, level), onComplete);
+      startRamp(song, songLevel(song), clampedTo, seconds, (level) => setSongLevel(song, level), onComplete);
     }
   }
 
@@ -348,6 +350,7 @@
     if (audioCtx && audioCtx.state === "suspended") audioCtx.resume();
     applyOutputVolume(song);
     startMeters();
+    state.showStarted = true;
   }
 
   async function playSong(song) {
@@ -729,6 +732,19 @@
   document.addEventListener("visibilitychange", () => {
     if (!document.hidden && audioCtx && audioCtx.state === "suspended") {
       audioCtx.resume();
+    }
+  });
+
+  // Once the show has started, guard against an accidental reload / tab
+  // close / navigation taking the board down mid-performance.
+  window.addEventListener("beforeunload", (event) => {
+    const playing = songs.some((song) => {
+      const audio = audioById.get(song.id);
+      return audio && !audio.paused && !audio.ended;
+    });
+    if (state.showStarted || playing) {
+      event.preventDefault();
+      event.returnValue = "";
     }
   });
 
