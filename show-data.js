@@ -74,8 +74,19 @@ window.SHOW_CUES = [
         loop: false
       },
       {
+        id: "7",
+        moment: "End of Sc III — transition out of Polonius's house.",
+        action: "Play Lag Tuna",
+        track: "Lag Tuna",
+        file: "assets/audio/lag-tuna.m4a",
+        volume: 80,
+        fadeIn: 8,
+        fadeOut: 3,
+        loop: false
+      },
+      {
         id: "8",
-        moment: "Sc IV — the platform again, cold night.",
+        moment: "Sc IV — the platform again, cold night. Fade in & loop.",
         action: "Play crickets",
         track: "Cricket Chirps",
         file: "assets/audio/cricket-chirps.mp3",
@@ -94,18 +105,13 @@ window.SHOW_CUES = [
         fadeIn: 8,
         fadeOut: 3,
         loop: false
-      }
-    ]
-  },
-  {
-    scene: "Act II",
-    cues: [
+      },
       {
         id: "10",
-        moment: "Sc II — King & Queen receive Rosencrantz and Guildenstern.",
-        action: "Play Court #1",
-        track: "Court #1",
-        file: "assets/audio/court-1.mp3",
+        moment: "End of Sc V — close of Act I, lights down.",
+        action: "Play Lag Tuna",
+        track: "Lag Tuna",
+        file: "assets/audio/lag-tuna.m4a",
         volume: 80,
         fadeIn: 8,
         fadeOut: 3,
@@ -118,7 +124,7 @@ window.SHOW_CUES = [
     cues: [
       {
         id: "11",
-        moment: "Sc I — after the nunnery scene, Ophelia alone.",
+        moment: "Sc I — top of the nunnery scene.",
         action: "Play Ophelia #1",
         track: "Ophelia #1",
         file: "assets/audio/ophelia-1.mp3",
@@ -129,10 +135,10 @@ window.SHOW_CUES = [
       },
       {
         id: "12",
-        moment: "Sc III — Hamlet plays the harp.",
-        action: "Play Lag Tuna",
-        track: "Lag Tuna",
-        file: "assets/audio/lag-tuna.m4a",
+        moment: "Sc IV — closet scene; the Ghost enters in lightning.",
+        action: "Play ghost noise",
+        track: "Ghost Noise",
+        file: "assets/audio/ghost-noise.mp3",
         volume: 80,
         fadeIn: 8,
         fadeOut: 3,
@@ -156,17 +162,6 @@ window.SHOW_CUES = [
     cues: [
       {
         id: "14",
-        moment: "Sc V — after Ophelia's mad songs, led off.",
-        action: "Play Ophelia #2",
-        track: "Ophelia #2",
-        file: "assets/audio/ophelia-2.mp3",
-        volume: 80,
-        fadeIn: 8,
-        fadeOut: 3,
-        loop: false
-      },
-      {
-        id: "15",
         moment: "End of Act IV — into the funeral.",
         action: "Play Funeral #1",
         track: "Funeral #1",
@@ -182,7 +177,7 @@ window.SHOW_CUES = [
     scene: "Act V",
     cues: [
       {
-        id: "16",
+        id: "15",
         moment: "Sc I — churchyard, after the grave is filled.",
         action: "Play Funeral #2",
         track: "Funeral #2",
@@ -190,6 +185,28 @@ window.SHOW_CUES = [
         volume: 80,
         fadeIn: 8,
         fadeOut: 3,
+        loop: false
+      },
+      {
+        id: "16",
+        moment: "Sc II — Hamlet & Horatio sit; CUT it when Marcellus enters.",
+        action: "Play Ophelia #2",
+        track: "Ophelia #2",
+        file: "assets/audio/ophelia-2.mp3",
+        volume: 80,
+        fadeIn: 8,
+        fadeOut: 3,
+        loop: false
+      },
+      {
+        id: "17",
+        moment: "End of show — fades out on its own.",
+        action: "Play Finale",
+        track: "Finale",
+        file: "assets/audio/finale.mp3",
+        volume: 80,
+        fadeIn: 4,
+        fadeOut: 0,
         loop: false
       }
     ]
