@@ -1,5 +1,5 @@
 (function () {
-  const VERSION = "v0.22.0";
+  const VERSION = "v0.22.1";
   const scenes = Array.isArray(window.SHOW_CUES) ? window.SHOW_CUES : [];
   const songs = scenes.flatMap((scene) => scene.cues);
   const audioById = new Map();
@@ -360,7 +360,7 @@
     songs.forEach((other) => {
       if (other === current || !other.song) return;
       const audio = audioById.get(other.id);
-      if (audio && !audio.paused && !audio.ended) stopSong(other);
+      if (audio && !audio.paused && !audio.ended) fadeSong(other);
     });
   }
 

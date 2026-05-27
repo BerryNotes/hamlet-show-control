@@ -2,7 +2,7 @@
 // Pre-caches the app shell on install and the audio files on request
 // from the page, so the board loads instantly and runs fully offline.
 
-const CACHE = "hamlet-v0.22.0";
+const CACHE = "hamlet-v0.22.1";
 
 const SHELL = [
   "./",
