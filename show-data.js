@@ -1,3 +1,6 @@
+// `song: true` marks a musical track — only one song plays at a time
+// (starting one stops any other playing song). Cues / noises (crickets,
+// ghost, rooster, bells) are not songs and layer freely.
 window.SHOW_CUES = [
   {
     scene: "Pre-Show",
@@ -11,7 +14,8 @@ window.SHOW_CUES = [
         volume: 80,
         fadeIn: 8,
         fadeOut: 3,
-        loop: false
+        loop: false,
+        song: true
       },
       {
         id: "2",
@@ -35,7 +39,7 @@ window.SHOW_CUES = [
         action: "Play crickets",
         track: "Cricket Chirps",
         file: "assets/audio/cricket-chirps.mp3",
-        volume: 80,
+        volume: 40,
         fadeIn: 8,
         fadeOut: 3,
         loop: true
@@ -71,7 +75,8 @@ window.SHOW_CUES = [
         volume: 80,
         fadeIn: 8,
         fadeOut: 3,
-        loop: false
+        loop: false,
+        song: true
       },
       {
         id: "7",
@@ -82,7 +87,8 @@ window.SHOW_CUES = [
         volume: 80,
         fadeIn: 8,
         fadeOut: 3,
-        loop: false
+        loop: false,
+        song: true
       },
       {
         id: "8",
@@ -90,7 +96,7 @@ window.SHOW_CUES = [
         action: "Play crickets",
         track: "Cricket Chirps",
         file: "assets/audio/cricket-chirps.mp3",
-        volume: 80,
+        volume: 40,
         fadeIn: 8,
         fadeOut: 3,
         loop: true
@@ -115,7 +121,8 @@ window.SHOW_CUES = [
         volume: 80,
         fadeIn: 8,
         fadeOut: 3,
-        loop: false
+        loop: false,
+        song: true
       }
     ]
   },
@@ -131,7 +138,8 @@ window.SHOW_CUES = [
         volume: 80,
         fadeIn: 8,
         fadeOut: 3,
-        loop: false
+        loop: false,
+        song: true
       },
       {
         id: "12",
@@ -153,7 +161,8 @@ window.SHOW_CUES = [
         volume: 80,
         fadeIn: 8,
         fadeOut: 3,
-        loop: false
+        loop: false,
+        song: true
       }
     ]
   },
@@ -169,7 +178,8 @@ window.SHOW_CUES = [
         volume: 80,
         fadeIn: 8,
         fadeOut: 3,
-        loop: false
+        loop: false,
+        song: true
       }
     ]
   },
@@ -185,7 +195,8 @@ window.SHOW_CUES = [
         volume: 80,
         fadeIn: 8,
         fadeOut: 3,
-        loop: false
+        loop: false,
+        song: true
       },
       {
         id: "16",
@@ -196,7 +207,8 @@ window.SHOW_CUES = [
         volume: 80,
         fadeIn: 8,
         fadeOut: 3,
-        loop: false
+        loop: false,
+        song: true
       },
       {
         id: "17",
@@ -207,7 +219,8 @@ window.SHOW_CUES = [
         volume: 80,
         fadeIn: 4,
         fadeOut: 0,
-        loop: false
+        loop: false,
+        song: true
       }
     ]
   }

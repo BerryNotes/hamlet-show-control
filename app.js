@@ -1,5 +1,5 @@
 (function () {
-  const VERSION = "v0.21.0";
+  const VERSION = "v0.22.0";
   const scenes = Array.isArray(window.SHOW_CUES) ? window.SHOW_CUES : [];
   const songs = scenes.flatMap((scene) => scene.cues);
   const audioById = new Map();
@@ -353,8 +353,20 @@
     state.showStarted = true;
   }
 
+  // Only one song plays at a time. Starting a song stops any other
+  // playing song; cues/noises (song !== true) are left alone.
+  function stopOtherSongs(current) {
+    if (!current.song) return;
+    songs.forEach((other) => {
+      if (other === current || !other.song) return;
+      const audio = audioById.get(other.id);
+      if (audio && !audio.paused && !audio.ended) stopSong(other);
+    });
+  }
+
   async function playSong(song) {
     const audio = getAudio(song);
+    stopOtherSongs(song);
     cancelRamp(song.id);
     audio.pause();
     audio.currentTime = 0;
@@ -376,6 +388,7 @@
 
   async function fadeInSong(song) {
     const audio = getAudio(song);
+    stopOtherSongs(song);
     cancelRamp(song.id);
     const wasPaused = audio.paused;
     const startLevel = wasPaused ? 0 : songLevel(song);
