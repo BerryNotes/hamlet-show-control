@@ -1,6 +1,6 @@
 // `song: true` marks a musical track — only one song plays at a time
-// (starting one stops any other playing song). Cues / noises (crickets,
-// ghost, rooster, bells) are not songs and layer freely.
+// (starting one fades the previous song out). Cues / noises (crickets,
+// rooster, bells) are not songs and layer freely.
 window.SHOW_CUES = [
   {
     scene: "Pre-Show",
@@ -19,7 +19,7 @@ window.SHOW_CUES = [
       },
       {
         id: "2",
-        moment: "Straight after the overture — bells toll midnight.",
+        moment: "After the overture — bells toll midnight.",
         action: "Play bells",
         track: "Midnight Bells",
         file: "assets/audio/midnight-bells.mp3",
@@ -27,15 +27,10 @@ window.SHOW_CUES = [
         fadeIn: 8,
         fadeOut: 3,
         loop: false
-      }
-    ]
-  },
-  {
-    scene: "Act I",
-    cues: [
+      },
       {
         id: "3",
-        moment: "Sc I — platform, night. Fade in & loop.",
+        moment: "After the bells — crickets begin and loop into Sc I.",
         action: "Play crickets",
         track: "Cricket Chirps",
         file: "assets/audio/cricket-chirps.mp3",
@@ -43,10 +38,15 @@ window.SHOW_CUES = [
         fadeIn: 8,
         fadeOut: 3,
         loop: true
-      },
+      }
+    ]
+  },
+  {
+    scene: "Act I",
+    cues: [
       {
-        id: "5",
-        moment: "Sc I — the cock crows, Ghost exits.",
+        id: "4",
+        moment: "Sc I — the cock crows; Ghost exits. Bring crickets back if you faded them.",
         action: "Play Rooster",
         track: "Rooster",
         file: "assets/audio/rooster.mp3",
@@ -56,8 +56,8 @@ window.SHOW_CUES = [
         loop: false
       },
       {
-        id: "6",
-        moment: "Sc II — room of state, court assembles.",
+        id: "5",
+        moment: "Sc II — court assembles. Dip the fader when Claudius/Patrick appears; cut on cue.",
         action: "Play Court #1",
         track: "Court #1",
         file: "assets/audio/court-1.mp3",
@@ -68,11 +68,11 @@ window.SHOW_CUES = [
         song: true
       },
       {
-        id: "7",
+        id: "6",
         moment: "End of Sc III — transition out of Polonius's house.",
-        action: "Play Lag Tuna",
-        track: "Lag Tuna",
-        file: "assets/audio/lag-tuna.m4a",
+        action: "Play Ophelia #2",
+        track: "Ophelia #2",
+        file: "assets/audio/ophelia-2.mp3",
         volume: 80,
         fadeIn: 8,
         fadeOut: 3,
@@ -80,8 +80,8 @@ window.SHOW_CUES = [
         song: true
       },
       {
-        id: "8",
-        moment: "Sc IV — the platform again, cold night. Fade in & loop.",
+        id: "7",
+        moment: "Sc IV — platform again, cold night. Fade in & loop; quiet under the Ghost.",
         action: "Play crickets",
         track: "Cricket Chirps",
         file: "assets/audio/cricket-chirps.mp3",
@@ -91,7 +91,7 @@ window.SHOW_CUES = [
         loop: true
       },
       {
-        id: "10",
+        id: "8",
         moment: "End of Sc V — close of Act I, lights down.",
         action: "Play Lag Tuna",
         track: "Lag Tuna",
@@ -105,11 +105,11 @@ window.SHOW_CUES = [
     ]
   },
   {
-    scene: "Act III",
+    scene: "Act II",
     cues: [
       {
-        id: "11",
-        moment: "Sc I — top of the nunnery scene.",
+        id: "9",
+        moment: "End of Sc III — Hamlet's \"My thoughts be bloody\" soliloquy; lights out into Act III.",
         action: "Play Ophelia #1",
         track: "Ophelia #1",
         file: "assets/audio/ophelia-1.mp3",
@@ -118,9 +118,14 @@ window.SHOW_CUES = [
         fadeOut: 3,
         loop: false,
         song: true
-      },
+      }
+    ]
+  },
+  {
+    scene: "Act III",
+    cues: [
       {
-        id: "13",
+        id: "10",
         moment: "End of Act III — intermission.",
         action: "Play intermission",
         track: "Intermission",
@@ -137,7 +142,7 @@ window.SHOW_CUES = [
     scene: "Act IV",
     cues: [
       {
-        id: "14",
+        id: "11",
         moment: "End of Act IV — into the funeral.",
         action: "Play Funeral #1",
         track: "Funeral #1",
@@ -154,8 +159,8 @@ window.SHOW_CUES = [
     scene: "Act V",
     cues: [
       {
-        id: "15",
-        moment: "Sc I — churchyard, after the grave is filled.",
+        id: "12",
+        moment: "Sc I — churchyard. CUT this when the gravedigger's song begins.",
         action: "Play Funeral #2",
         track: "Funeral #2",
         file: "assets/audio/funeral-2.mp3",
@@ -166,19 +171,19 @@ window.SHOW_CUES = [
         song: true
       },
       {
-        id: "16",
-        moment: "Sc II — Hamlet & Horatio sit; CUT it when Marcellus enters.",
-        action: "Play Ophelia #2",
-        track: "Ophelia #2",
-        file: "assets/audio/ophelia-2.mp3",
-        volume: 80,
-        fadeIn: 8,
+        id: "13",
+        moment: "Sc II — low court music under the duel. CUT after the rapiers change.",
+        action: "Play Court (duel)",
+        track: "Court (duel)",
+        file: "assets/audio/court-1.mp3",
+        volume: 50,
+        fadeIn: 4,
         fadeOut: 3,
         loop: false,
         song: true
       },
       {
-        id: "17",
+        id: "14",
         moment: "End of show — fades out on its own.",
         action: "Play Finale",
         track: "Finale",
