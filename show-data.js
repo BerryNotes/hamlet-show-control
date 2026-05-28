@@ -166,6 +166,18 @@ window.SHOW_CUES = [
         song: true
       },
       {
+        id: "16",
+        moment: "Sc II — Hamlet & Horatio sit; CUT it when Marcellus enters.",
+        action: "Play Ophelia #2",
+        track: "Ophelia #2",
+        file: "assets/audio/ophelia-2.mp3",
+        volume: 80,
+        fadeIn: 8,
+        fadeOut: 3,
+        loop: false,
+        song: true
+      },
+      {
         id: "17",
         moment: "End of show — fades out on its own.",
         action: "Play Finale",
