@@ -1,5 +1,5 @@
 // `song: true` marks a musical track — only one song plays at a time
-// (starting one fades the previous song out). Cues / noises (crickets,
+// (starting one stops the previous song). Cues / noises (crickets,
 // rooster, bells) are not songs and layer freely.
 window.SHOW_CUES = [
   {
@@ -12,8 +12,6 @@ window.SHOW_CUES = [
         track: "Doorbell",
         file: "assets/audio/doorbell.mp3",
         volume: 80,
-        fadeIn: 2,
-        fadeOut: 1,
         loop: false
       },
       {
@@ -23,8 +21,6 @@ window.SHOW_CUES = [
         track: "Phone",
         file: "assets/audio/phone.mp3",
         volume: 80,
-        fadeIn: 2,
-        fadeOut: 1,
         loop: false
       },
       {
@@ -34,8 +30,6 @@ window.SHOW_CUES = [
         track: "Door Close",
         file: "assets/audio/door-close.mp3",
         volume: 80,
-        fadeIn: 2,
-        fadeOut: 1,
         loop: false
       }
     ]

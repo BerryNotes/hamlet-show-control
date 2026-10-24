@@ -2,7 +2,7 @@
 // Pre-caches the app shell on install and the audio files on request
 // from the page, so the board loads instantly and runs fully offline.
 
-const CACHE = "hamlet-v0.26.0";
+const CACHE = "hamlet-v0.27.0";
 
 const SHELL = [
   "./",
@@ -18,7 +18,8 @@ const SHELL = [
 self.addEventListener("install", (event) => {
   event.waitUntil(
     caches.open(CACHE)
-      .then((cache) => cache.addAll(SHELL))
+      // Bypass the HTTP cache so a new version never pre-caches stale files.
+      .then((cache) => cache.addAll(SHELL.map((url) => new Request(url, { cache: "reload" }))))
       .then(() => self.skipWaiting())
   );
 });

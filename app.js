@@ -1,5 +1,5 @@
 (function () {
-  const VERSION = "v0.26.0";
+  const VERSION = "v0.27.0";
   const scenes = Array.isArray(window.SHOW_CUES) ? window.SHOW_CUES : [];
   const songs = scenes.flatMap((scene) => scene.cues);
   const audioById = new Map();
@@ -274,78 +274,6 @@
     state.ramps.delete(songId);
   }
 
-  // rAF ramp — fallback only when Web Audio is unavailable.
-  function startRamp(song, from, to, seconds, onUpdate, done) {
-    cancelRamp(song.id);
-    const token = { cancelled: false };
-    state.ramps.set(song.id, token);
-
-    const finish = () => {
-      if (token.cancelled) return;
-      state.ramps.delete(song.id);
-      if (done) done();
-    };
-
-    const duration = Math.max(0, seconds || 0) * 1000;
-    if (!duration) {
-      if (onUpdate) onUpdate(to);
-      finish();
-      return;
-    }
-
-    const started = performance.now();
-    const step = (now) => {
-      if (token.cancelled) return;
-      const progress = Math.min(1, (now - started) / duration);
-      const value = from + (to - from) * progress;
-      if (onUpdate) onUpdate(value);
-      if (progress < 1) requestAnimationFrame(step);
-      else finish();
-    };
-
-    requestAnimationFrame(step);
-  }
-
-  // Fade using native gain-node automation when possible, so the fade
-  // runs on the audio thread and is unaffected by tab backgrounding /
-  // requestAnimationFrame throttling. Falls back to the rAF ramp.
-  function fade(song, to, seconds, onComplete) {
-    cancelRamp(song.id);
-    const graph = graphById.get(song.id);
-    const clampedTo = Math.min(1, Math.max(0, to));
-
-    if (graph && audioCtx) {
-      const g = graph.gain.gain;
-      const now = audioCtx.currentTime;
-      // Start from the channel's actual current gain so a fade-out begins
-      // wherever the fader is now, not from the cue's default level.
-      const safeFrom = Math.max(0.0001, g.value);
-      const safeTo = Math.max(0.0001, clampedTo);
-      g.cancelScheduledValues(now);
-      g.setValueAtTime(safeFrom, now);
-      if (seconds > 0) g.linearRampToValueAtTime(safeTo, now + seconds);
-      else g.setValueAtTime(clampedTo, now);
-
-      state.levels.set(song.id, clampedTo);
-
-      const token = { cancelled: false, timer: 0 };
-      state.ramps.set(song.id, token);
-      token.timer = setTimeout(() => {
-        if (token.cancelled) return;
-        state.ramps.delete(song.id);
-        g.cancelScheduledValues(audioCtx.currentTime);
-        g.value = clampedTo;
-        updateMixer(song);
-        if (onComplete) onComplete();
-      }, Math.max(0, seconds) * 1000 + 80);
-
-      startMeters();
-      updateMixer(song);
-    } else {
-      startRamp(song, songLevel(song), clampedTo, seconds, (level) => setSongLevel(song, level), onComplete);
-    }
-  }
-
   // Keep the screen awake during the show so the OS can't dim/sleep the
   // display (which on many machines suspends audio or locks the booth).
   function requestWakeLock() {
@@ -372,7 +300,7 @@
     songs.forEach((other) => {
       if (other === current || !other.song) return;
       const audio = audioById.get(other.id);
-      if (audio && !audio.paused && !audio.ended) fadeSong(other);
+      if (audio && !audio.paused && !audio.ended) stopSong(other);
     });
   }
 
@@ -396,48 +324,6 @@
     }
 
     syncStatus();
-  }
-
-  async function fadeInSong(song) {
-    const audio = getAudio(song);
-    stopOtherSongs(song);
-    cancelRamp(song.id);
-    const wasPaused = audio.paused;
-    const startLevel = wasPaused ? 0 : songLevel(song);
-    if (wasPaused) {
-      audio.currentTime = 0;
-      audio.loop = state.looping.has(song.id);
-    }
-    setSongLevel(song, startLevel);
-    ensureMixer(song);
-    prepareAudioOutput(song);
-    updateMixer(song);
-    flashCue(song);
-
-    try {
-      if (wasPaused) await audio.play();
-      state.warning = "";
-      fade(song, defaultSongLevel(song), song.fadeIn || 4, syncStatus);
-    } catch (error) {
-      state.warning = `Could not play ${songName(song)}`;
-    }
-
-    syncStatus();
-  }
-
-  function fadeSong(song) {
-    const audio = audioById.get(song.id);
-    if (!audio || audio.paused) return;
-
-    ensureMixer(song);
-    fade(song, 0, song.fadeOut ?? 5, () => {
-      audio.pause();
-      audio.currentTime = 0;
-      state.levels.delete(song.id);
-      applyOutputVolume(song);
-      removeMixer(song);
-      syncStatus();
-    });
   }
 
   function stopSong(song) {
@@ -505,7 +391,6 @@
     const volume = strip.querySelector(".fader-input");
     const output = strip.querySelector(".strip-readout");
     const loopBtn = strip.querySelector(".strip-loop");
-    const fadeBtn = strip.querySelector(".strip-fade");
 
     strip.querySelector(".scribble-name").textContent = songName(song);
     strip.querySelector(".channel-num").textContent = `CH ${song.id}`;
@@ -519,7 +404,6 @@
     });
 
     loopBtn.addEventListener("click", () => toggleLoop(song));
-    fadeBtn.addEventListener("click", () => fadeSong(song));
 
     strip.querySelector(".strip-stop").addEventListener("click", () => {
       stopSong(song);
@@ -623,9 +507,7 @@
 
         row.querySelector(".song-title").textContent = songName(song);
         row.querySelector(".play-button").addEventListener("click", () => playSong(song));
-        row.querySelector(".fade-in-button").addEventListener("click", () => fadeInSong(song));
         row.querySelector(".loop-button").addEventListener("click", () => toggleLoop(song));
-        row.querySelector(".fade-button").addEventListener("click", () => fadeSong(song));
         row.querySelector(".stop-button").addEventListener("click", () => {
           stopSong(song);
           syncStatus();
