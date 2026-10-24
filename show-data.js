@@ -48,6 +48,15 @@ window.SHOW_CUES = [
         file: "assets/audio/door-open-close.mp3",
         volume: 80,
         loop: false
+      },
+      {
+        id: "6",
+        moment: "Vine boom.",
+        action: "Play vine boom",
+        track: "Vine Boom",
+        file: "assets/audio/vine-boom.mp3",
+        volume: 80,
+        loop: false
       }
     ]
   }
