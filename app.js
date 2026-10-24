@@ -1,5 +1,5 @@
 (function () {
-  const VERSION = "v0.31.0";
+  const VERSION = "v0.32.0";
   const scenes = Array.isArray(window.SHOW_CUES) ? window.SHOW_CUES : [];
   const songs = scenes.flatMap((scene) => scene.cues);
   const audioById = new Map();

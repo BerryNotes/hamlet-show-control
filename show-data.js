@@ -24,15 +24,6 @@ window.SHOW_CUES = [
       },
       {
         id: "3",
-        moment: "Door opens.",
-        action: "Play door open",
-        track: "Door Open",
-        file: "assets/audio/door-open.mp3",
-        volume: 80,
-        loop: false
-      },
-      {
-        id: "4",
         moment: "Door closes.",
         action: "Play door close",
         track: "Door Close",
@@ -41,7 +32,7 @@ window.SHOW_CUES = [
         loop: false
       },
       {
-        id: "5",
+        id: "4",
         moment: "Door opens and closes.",
         action: "Play door open and close",
         track: "Door Open & Close",
@@ -50,7 +41,7 @@ window.SHOW_CUES = [
         loop: false
       },
       {
-        id: "6",
+        id: "5",
         moment: "Vine boom.",
         action: "Play vine boom",
         track: "Vine Boom",
