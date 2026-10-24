@@ -1,5 +1,5 @@
 (function () {
-  const VERSION = "v0.36.0";
+  const VERSION = "v0.37.0";
   const scenes = Array.isArray(window.SHOW_CUES) ? window.SHOW_CUES : [];
   const songs = scenes.flatMap((scene) => scene.cues);
   const audioById = new Map();
@@ -533,12 +533,13 @@
     return stopSoundById.get(song.id);
   }
 
-  // The Stop buttons: cues with `stopFade` (seconds) dip out quickly
-  // instead of cutting, and cues with `stopSound` play their tail.
+  // The Stop buttons: cues with `stopFade` (seconds) ramp out instead of
+  // cutting, and cues with `stopSound` play their tail on every press —
+  // started in the same instant so the hand-off is seamless.
   // STOP ALL / Esc stay instant and silent.
   function stopButton(song) {
     const audio = audioById.get(song.id);
-    const tail = audio && !audio.paused ? getStopSound(song) : null;
+    const tail = getStopSound(song);
     if (tail) {
       tail.pause();
       tail.currentTime = 0;

@@ -2,7 +2,7 @@
 // Pre-caches the app shell on install and the audio files on request
 // from the page, so the board loads instantly and runs fully offline.
 
-const CACHE = "soundboard-v0.36.0";
+const CACHE = "soundboard-v0.37.0";
 
 const SHELL = [
   "./",
@@ -49,9 +49,10 @@ self.addEventListener("message", (event) => {
   }
 });
 
-// Cache-first for same-origin GETs. Returns the full cached response even to
-// Range requests (the browser handles a 200 to a Range request fine, and the
-// duration bar is display-only so no seeking depends on 206s).
+// Network-first for same-origin GETs, so a deploy shows up on the next
+// load. Falls back to the cache when offline, or when the network takes
+// more than 4 s (slow booth wifi). Returns the full cached response even to
+// Range requests (the browser handles a 200 to a Range request fine).
 self.addEventListener("fetch", (event) => {
   const req = event.request;
   if (req.method !== "GET") return;
@@ -59,16 +60,15 @@ self.addEventListener("fetch", (event) => {
   const url = new URL(req.url);
   if (url.origin !== self.location.origin) return;
 
-  event.respondWith(
-    caches.match(req, { ignoreSearch: true }).then((cached) => {
-      if (cached) return cached;
-      return fetch(req).then((res) => {
-        if (res && res.status === 200 && res.type === "basic") {
-          const copy = res.clone();
-          caches.open(CACHE).then((cache) => cache.put(req, copy));
-        }
-        return res;
-      }).catch(() => cached);
-    })
-  );
+  event.respondWith((async () => {
+    const cache = await caches.open(CACHE);
+    const cached = await cache.match(req, { ignoreSearch: true });
+    const network = fetch(req).then((res) => {
+      if (res && res.status === 200 && res.type === "basic") cache.put(req, res.clone());
+      return res;
+    });
+    if (!cached) return network;
+    const slow = new Promise((resolve) => setTimeout(() => resolve(cached), 4000));
+    return Promise.race([network.catch(() => cached), slow]);
+  })());
 });
