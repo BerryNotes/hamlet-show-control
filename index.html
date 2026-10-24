@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Hamlet Music Board</title>
+    <title>Sound Board</title>
     <link rel="icon" type="image/svg+xml" href="favicon.svg">
     <link rel="manifest" href="manifest.webmanifest">
     <meta name="theme-color" content="#0a0908">
@@ -13,11 +13,9 @@
   <body>
     <header class="topbar">
       <div class="brand">
-        <img class="brand-skull" src="skull-mark.svg" alt="" aria-hidden="true">
         <div>
-          <p class="eyebrow">Hamlet &middot; Elsinore <span id="version" class="version"></span></p>
-          <h1>Music Board</h1>
-          <p class="tagline" id="tagline">&ldquo;The play&rsquo;s the thing.&rdquo;</p>
+          <p class="eyebrow">Show Control <span id="version" class="version"></span></p>
+          <h1>Sound Board</h1>
         </div>
       </div>
       <button id="stopAll" class="stop-all" type="button">STOP ALL</button>
@@ -38,9 +36,8 @@
         </header>
 
         <div class="mixer-board">
-          <img class="board-skull" src="skull-mark.svg" alt="" aria-hidden="true">
           <div class="channels" id="mixerList"></div>
-          <p id="emptyMixer" class="empty-mixer">The rest is silence.</p>
+          <p id="emptyMixer" class="empty-mixer">Nothing playing.</p>
 
           <div class="channel-strip master-strip">
             <div class="scribble"><span class="scribble-name">Master</span></div>

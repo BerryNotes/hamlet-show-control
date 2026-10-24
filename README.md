@@ -1,4 +1,4 @@
-# Hamlet Show Control
+# Sound Board
 
 A browser-based show-control board for running music and SFX live during a production.
 
@@ -20,13 +20,13 @@ Cue example:
 
 ```js
 {
-  id: "Q4",
-  track: "Mousetrap Pulse",
-  file: "assets/audio/mousetrap-pulse.mp3",
-  volume: 74,
-  fadeIn: 3,
-  fadeOut: 7,
-  loop: true
+  id: "4",
+  moment: "Car horn outside.",
+  action: "Play car horn",
+  track: "Car Horn",
+  file: "assets/audio/car-horn.mp3",
+  volume: 80,
+  loop: false
 }
 ```
 

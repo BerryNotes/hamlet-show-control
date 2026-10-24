@@ -1,7 +1,7 @@
 {
-  "name": "Hamlet Music Board",
-  "short_name": "Hamlet",
-  "description": "Show-control board for running music and SFX live during Hamlet.",
+  "name": "Sound Board",
+  "short_name": "Sound Board",
+  "description": "Show-control board for running music and SFX live during a show.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",

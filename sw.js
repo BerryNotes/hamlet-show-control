@@ -1,8 +1,8 @@
-// Hamlet Music Board — service worker
+// Sound Board — service worker
 // Pre-caches the app shell on install and the audio files on request
 // from the page, so the board loads instantly and runs fully offline.
 
-const CACHE = "hamlet-v0.27.0";
+const CACHE = "soundboard-v0.28.0";
 
 const SHELL = [
   "./",
@@ -11,7 +11,6 @@ const SHELL = [
   "./app.js",
   "./show-data.js",
   "./favicon.svg",
-  "./skull-mark.svg",
   "./manifest.webmanifest"
 ];
 

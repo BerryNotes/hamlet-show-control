@@ -1,6 +1,5 @@
 // `song: true` marks a musical track — only one song plays at a time
-// (starting one stops the previous song). Cues / noises (crickets,
-// rooster, bells) are not songs and layer freely.
+// (starting one stops the previous song). Sound effects are not songs and layer freely.
 window.SHOW_CUES = [
   {
     scene: "Sound Effects",
@@ -25,6 +24,15 @@ window.SHOW_CUES = [
       },
       {
         id: "3",
+        moment: "Door opens.",
+        action: "Play door open",
+        track: "Door Open",
+        file: "assets/audio/door-open.mp3",
+        volume: 80,
+        loop: false
+      },
+      {
+        id: "4",
         moment: "Door closes.",
         action: "Play door close",
         track: "Door Close",

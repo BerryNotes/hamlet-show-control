@@ -1,5 +1,5 @@
 (function () {
-  const VERSION = "v0.27.0";
+  const VERSION = "v0.28.0";
   const scenes = Array.isArray(window.SHOW_CUES) ? window.SHOW_CUES : [];
   const songs = scenes.flatMap((scene) => scene.cues);
   const audioById = new Map();
@@ -474,7 +474,7 @@
       return audio && !audio.paused && !audio.ended;
     });
 
-    els.nowPlaying.textContent = playing.length ? playing.map(songName).join(", ") : state.warning || "The rest is silence.";
+    els.nowPlaying.textContent = playing.length ? playing.map(songName).join(", ") : state.warning || "Nothing playing.";
     document.body.classList.toggle("is-playing", playing.length > 0);
     if (els.boardMeta) {
       els.boardMeta.textContent = playing.length
@@ -684,30 +684,6 @@
 
   const versionEl = document.querySelector("#version");
   if (versionEl) versionEl.textContent = VERSION;
-
-  // Rotating Hamlet epigraphs in the tagline (skipped if reduced motion).
-  const taglineEl = document.querySelector("#tagline");
-  const reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  if (taglineEl && !reduceMotion) {
-    const quotes = [
-      "The play’s the thing.",
-      "To be, or not to be.",
-      "Though this be madness, yet there is method in’t.",
-      "Brevity is the soul of wit.",
-      "What a piece of work is a man.",
-      "Alas, poor Yorick.",
-      "The rest is silence."
-    ];
-    let qi = 0;
-    setInterval(() => {
-      qi = (qi + 1) % quotes.length;
-      taglineEl.classList.add("is-fading");
-      setTimeout(() => {
-        taglineEl.textContent = "“" + quotes[qi] + "”";
-        taglineEl.classList.remove("is-fading");
-      }, 600);
-    }, 7000);
-  }
 
   renderSongs();
   loadSounds();
