@@ -1,5 +1,5 @@
 (function () {
-  const VERSION = "v0.33.1";
+  const VERSION = "v0.34.0";
   const scenes = Array.isArray(window.SHOW_CUES) ? window.SHOW_CUES : [];
   const songs = scenes.flatMap((scene) => scene.cues);
   const audioById = new Map();
@@ -104,6 +104,159 @@
     }
   }
 
+  // Sounds are decoded up front into Web Audio buffers and played with
+  // buffer sources, which start almost instantly — an <audio> element has
+  // to seek and spin up a decoder on every press. BufferVoice exposes the
+  // small slice of the HTMLAudioElement API the rest of the board uses.
+  class BufferVoice extends EventTarget {
+    constructor(src) {
+      super();
+      this.src = src;
+      this.dataset = {};
+      this.loop = false;
+      this.volume = 1;
+      this.preload = "auto";
+      this.buffer = null;
+      this.node = null;
+      this.offset = 0;
+      this.startedAt = 0;
+      this.paused = true;
+      this.ended = false;
+      this.loading = null;
+      this.ticker = 0;
+      this.output = audioCtx.createGain();
+    }
+
+    get readyState() { return this.buffer ? HTMLMediaElement.HAVE_ENOUGH_DATA : HTMLMediaElement.HAVE_NOTHING; }
+    get duration() { return this.buffer ? this.buffer.duration : NaN; }
+
+    get currentTime() {
+      if (!this.buffer) return 0;
+      if (this.paused) return this.offset;
+      const t = this.offset + audioCtx.currentTime - this.startedAt;
+      return this.loop ? t % this.buffer.duration : Math.min(t, this.buffer.duration);
+    }
+
+    set currentTime(value) {
+      const playing = !this.paused;
+      if (playing) this.stopNode();
+      this.offset = Math.max(0, Number(value) || 0);
+      if (this.buffer) this.offset = Math.min(this.offset, this.buffer.duration);
+      this.ended = false;
+      if (playing) this.startNode();
+      this.dispatchEvent(new Event("seeked"));
+    }
+
+    load() {
+      if (!this.loading) {
+        this.loading = fetch(this.src)
+          .then((res) => {
+            if (!res.ok) throw new Error(`HTTP ${res.status}`);
+            return res.arrayBuffer();
+          })
+          .then((bytes) => new Promise((resolve, reject) => audioCtx.decodeAudioData(bytes, resolve, reject)))
+          .then((buffer) => {
+            this.buffer = trimLeadingSilence(buffer);
+            this.dispatchEvent(new Event("loadedmetadata"));
+            this.dispatchEvent(new Event("durationchange"));
+          })
+          .catch((error) => {
+            this.loading = null;
+            throw error;
+          });
+      }
+      return this.loading;
+    }
+
+    async play() {
+      if (!this.buffer) await this.load();
+      if (!this.paused) return;
+      if (this.ended || this.offset >= this.buffer.duration) this.offset = 0;
+      this.ended = false;
+      this.paused = false;
+      this.startNode();
+    }
+
+    pause() {
+      if (this.paused) return;
+      this.offset = this.currentTime;
+      this.stopNode();
+      this.paused = true;
+    }
+
+    startNode() {
+      const node = audioCtx.createBufferSource();
+      node.buffer = this.buffer;
+      node.loop = this.loop;
+      node.connect(this.output);
+      node.onended = () => {
+        if (this.node !== node) return;
+        this.stopNode();
+        this.paused = true;
+        this.ended = true;
+        this.offset = 0;
+        this.dispatchEvent(new Event("timeupdate"));
+        this.dispatchEvent(new Event("ended"));
+      };
+      this.startedAt = audioCtx.currentTime;
+      node.start(0, this.offset);
+      this.node = node;
+      clearInterval(this.ticker);
+      this.ticker = setInterval(() => this.dispatchEvent(new Event("timeupdate")), 250);
+    }
+
+    stopNode() {
+      const node = this.node;
+      this.node = null;
+      clearInterval(this.ticker);
+      if (!node) return;
+      node.onended = null;
+      try { node.stop(); } catch (error) { /* already stopped */ }
+      node.disconnect();
+    }
+  }
+
+  // Drop the silent lead-in most files have (MP3 encoder padding plus any
+  // dead air), keeping 2 ms before the first audible sample.
+  function trimLeadingSilence(buffer) {
+    const threshold = 0.003;
+    let first = buffer.length;
+    for (let ch = 0; ch < buffer.numberOfChannels; ch++) {
+      const data = buffer.getChannelData(ch);
+      for (let i = 0; i < first; i++) {
+        if (Math.abs(data[i]) > threshold) { first = i; break; }
+      }
+    }
+    const start = Math.max(0, first - Math.round(buffer.sampleRate * 0.002));
+    if (start === 0 || start >= buffer.length) return buffer;
+    const trimmed = audioCtx.createBuffer(buffer.numberOfChannels, buffer.length - start, buffer.sampleRate);
+    for (let ch = 0; ch < buffer.numberOfChannels; ch++) {
+      trimmed.copyToChannel(buffer.getChannelData(ch).subarray(start), ch);
+    }
+    return trimmed;
+  }
+
+  // Bluetooth speakers and headphones power down their link after a few
+  // seconds of silence, then clip or delay the next sound while they wake.
+  // A constant, inaudible noise floor (about -74 dB) keeps the link awake.
+  let keepAlive = null;
+  function startKeepAlive() {
+    if (keepAlive || !audioCtx) return;
+    const length = audioCtx.sampleRate;
+    const noise = audioCtx.createBuffer(1, length, audioCtx.sampleRate);
+    const data = noise.getChannelData(0);
+    for (let i = 0; i < length; i++) data[i] = Math.random() * 2 - 1;
+    const source = audioCtx.createBufferSource();
+    source.buffer = noise;
+    source.loop = true;
+    const gain = audioCtx.createGain();
+    gain.gain.value = 0.0002;
+    source.connect(gain);
+    gain.connect(audioCtx.destination);
+    source.start();
+    keepAlive = source;
+  }
+
   function ensureGraph(song) {
     if (graphById.has(song.id)) return graphById.get(song.id);
     if (!ensureAudioContext()) return null;
@@ -112,7 +265,7 @@
 
     let source;
     try {
-      source = audioCtx.createMediaElementSource(audio);
+      source = audio.output || audioCtx.createMediaElementSource(audio);
     } catch (error) {
       return null;
     }
@@ -238,7 +391,7 @@
 
   function getAudio(song) {
     if (!audioById.has(song.id)) {
-      const audio = new Audio(song.file);
+      const audio = ensureAudioContext() ? new BufferVoice(song.file) : new Audio(song.file);
       audio.preload = "auto";
       audio.loop = state.looping.has(song.id);
       audio.addEventListener("loadedmetadata", () => {
@@ -287,6 +440,7 @@
   function prepareAudioOutput(song) {
     ensureGraph(song);
     if (audioCtx && audioCtx.state === "suspended") audioCtx.resume();
+    startKeepAlive();
     applyOutputVolume(song);
     startMeters();
     state.showStarted = true;
@@ -488,7 +642,15 @@
         const row = fragment.querySelector(".song-row");
 
         row.querySelector(".song-title").textContent = songName(song);
-        row.querySelector(".play-button").addEventListener("click", () => playSong(song));
+        // Fire on press, not release, so the sound starts the instant the
+        // button goes down. Keyboard activation still arrives as a click.
+        const playButton = row.querySelector(".play-button");
+        playButton.addEventListener("pointerdown", (event) => {
+          if (event.button === 0) playSong(song);
+        });
+        playButton.addEventListener("click", (event) => {
+          if (event.detail === 0) playSong(song);
+        });
         row.querySelector(".stop-button").addEventListener("click", () => {
           stopSong(song);
           syncStatus();
@@ -625,9 +787,14 @@
   });
 
   // Any tap/click also nudges a suspended context back to life (covers
-  // OS audio interruptions like a phone call or notification).
-  document.addEventListener("pointerdown", () => {
-    if (audioCtx && audioCtx.state === "suspended") audioCtx.resume();
+  // OS audio interruptions like a phone call or notification). Phones only
+  // allow audio to start on the release of the first tap, so listen for
+  // that too.
+  ["pointerdown", "pointerup", "click"].forEach((type) => {
+    document.addEventListener(type, () => {
+      if (audioCtx && audioCtx.state === "suspended") audioCtx.resume();
+      startKeepAlive();
+    });
   });
 
   // Last-resort resilience: never let a stray error or rejected promise
