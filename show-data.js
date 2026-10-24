@@ -39,6 +39,15 @@ window.SHOW_CUES = [
         file: "assets/audio/door-close.mp3",
         volume: 80,
         loop: false
+      },
+      {
+        id: "5",
+        moment: "Door opens and closes.",
+        action: "Play door open and close",
+        track: "Door Open & Close",
+        file: "assets/audio/door-open-close.mp3",
+        volume: 80,
+        loop: false
       }
     ]
   }
