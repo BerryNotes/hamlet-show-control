@@ -20,6 +20,7 @@ window.SHOW_CUES = [
         track: "Phone",
         file: "assets/audio/phone.mp3",
         volume: 80,
+        stopFade: 0.2,
         loop: false
       },
       {

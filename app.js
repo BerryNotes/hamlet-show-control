@@ -1,5 +1,5 @@
 (function () {
-  const VERSION = "v0.34.0";
+  const VERSION = "v0.35.0";
   const scenes = Array.isArray(window.SHOW_CUES) ? window.SHOW_CUES : [];
   const songs = scenes.flatMap((scene) => scene.cues);
   const audioById = new Map();
@@ -124,6 +124,7 @@
       this.ended = false;
       this.loading = null;
       this.ticker = 0;
+      this.fadeTimer = 0;
       this.output = audioCtx.createGain();
     }
 
@@ -184,7 +185,29 @@
       this.paused = true;
     }
 
+    // Ramp to silence over `seconds`, then call onDone (which stops it).
+    fadeOut(seconds, onDone) {
+      this.cancelFade();
+      const g = this.output.gain;
+      const now = audioCtx.currentTime;
+      g.setValueAtTime(g.value, now);
+      g.linearRampToValueAtTime(0, now + seconds);
+      this.fadeTimer = setTimeout(() => {
+        this.fadeTimer = 0;
+        onDone();
+      }, seconds * 1000);
+    }
+
+    cancelFade() {
+      clearTimeout(this.fadeTimer);
+      this.fadeTimer = 0;
+      const g = this.output.gain;
+      g.cancelScheduledValues(audioCtx.currentTime);
+      g.setValueAtTime(1, audioCtx.currentTime);
+    }
+
     startNode() {
+      this.cancelFade();
       const node = audioCtx.createBufferSource();
       node.buffer = this.buffer;
       node.loop = this.loop;
@@ -484,11 +507,27 @@
     const audio = audioById.get(song.id);
     if (!audio) return;
     cancelRamp(song.id);
+    if (audio.cancelFade) audio.cancelFade();
     audio.pause();
     audio.currentTime = 0;
     state.levels.delete(song.id);
     applyOutputVolume(song);
     removeMixer(song);
+  }
+
+  // The Stop buttons: cues with `stopFade` (seconds) dip out quickly
+  // instead of cutting. STOP ALL / Esc stay instant.
+  function stopButton(song) {
+    const audio = audioById.get(song.id);
+    if (song.stopFade && audio && audio.fadeOut && !audio.paused) {
+      audio.fadeOut(song.stopFade, () => {
+        stopSong(song);
+        syncStatus();
+      });
+      return;
+    }
+    stopSong(song);
+    syncStatus();
   }
 
   function stopAll() {
@@ -541,10 +580,7 @@
       output.textContent = volume.value;
     });
 
-    strip.querySelector(".strip-stop").addEventListener("click", () => {
-      stopSong(song);
-      syncStatus();
-    });
+    strip.querySelector(".strip-stop").addEventListener("click", () => stopButton(song));
 
     mixerById.set(song.id, strip);
     els.mixerList.append(fragment);
@@ -651,10 +687,7 @@
         playButton.addEventListener("click", (event) => {
           if (event.detail === 0) playSong(song);
         });
-        row.querySelector(".stop-button").addEventListener("click", () => {
-          stopSong(song);
-          syncStatus();
-        });
+        row.querySelector(".stop-button").addEventListener("click", () => stopButton(song));
 
         // Click anywhere on the card (not a button) to arm it as standby.
         row.addEventListener("click", (event) => {
