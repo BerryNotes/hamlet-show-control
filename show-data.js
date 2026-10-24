@@ -15,12 +15,13 @@ window.SHOW_CUES = [
       },
       {
         id: "2",
-        moment: "Phone rings.",
+        moment: "Phone rings. Stop plays the pickup.",
         action: "Play phone",
         track: "Phone",
         file: "assets/audio/phone.mp3",
         volume: 80,
         stopFade: 0.2,
+        stopSound: "assets/audio/phone-end.mp3",
         loop: false
       },
       {

@@ -1,5 +1,5 @@
 (function () {
-  const VERSION = "v0.35.0";
+  const VERSION = "v0.36.0";
   const scenes = Array.isArray(window.SHOW_CUES) ? window.SHOW_CUES : [];
   const songs = scenes.flatMap((scene) => scene.cues);
   const audioById = new Map();
@@ -515,10 +515,35 @@
     removeMixer(song);
   }
 
+  // A cue's `stopSound` is a tail (e.g. a phone being picked up) that
+  // plays when its Stop button ends it. Preloaded and routed straight to
+  // the master bus; it doesn't get a row or a mixer strip of its own.
+  const stopSoundById = new Map();
+  function getStopSound(song) {
+    if (!song.stopSound || !ensureAudioContext()) return null;
+    if (!stopSoundById.has(song.id)) {
+      const voice = new BufferVoice(song.stopSound);
+      const gain = audioCtx.createGain();
+      gain.gain.value = defaultSongLevel(song);
+      voice.output.connect(gain);
+      gain.connect(masterGain);
+      voice.load().catch(() => {});
+      stopSoundById.set(song.id, voice);
+    }
+    return stopSoundById.get(song.id);
+  }
+
   // The Stop buttons: cues with `stopFade` (seconds) dip out quickly
-  // instead of cutting. STOP ALL / Esc stay instant.
+  // instead of cutting, and cues with `stopSound` play their tail.
+  // STOP ALL / Esc stay instant and silent.
   function stopButton(song) {
     const audio = audioById.get(song.id);
+    const tail = audio && !audio.paused ? getStopSound(song) : null;
+    if (tail) {
+      tail.pause();
+      tail.currentTime = 0;
+      tail.play().catch(() => {});
+    }
     if (song.stopFade && audio && audio.fadeOut && !audio.paused) {
       audio.fadeOut(song.stopFade, () => {
         stopSong(song);
@@ -537,6 +562,7 @@
   }
 
   function loadSounds() {
+    songs.forEach(getStopSound);
     songs.forEach((song) => {
       const audio = getAudio(song);
       if (!audio.paused) return;
@@ -874,7 +900,7 @@
   // Offline support: register the service worker and have it pre-cache
   // every audio file so the board runs with no network (booth-wifi safe).
   if ("serviceWorker" in navigator) {
-    const audioUrls = Array.from(new Set(songs.map((song) => song.file)));
+    const audioUrls = Array.from(new Set(songs.flatMap((song) => [song.file, song.stopSound].filter(Boolean))));
     const cacheAudio = () => {
       if (navigator.serviceWorker.controller) {
         navigator.serviceWorker.controller.postMessage({ type: "CACHE_AUDIO", urls: audioUrls });
