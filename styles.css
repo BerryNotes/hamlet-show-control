@@ -116,6 +116,47 @@ button:active { transform: translateY(1px); }
   text-transform: uppercase;
 }
 
+.audio-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+  padding: 6px 12px;
+  border: 1px solid;
+  border-radius: 999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+}
+.audio-status::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+}
+.audio-status[data-mode="ready"] {
+  color: var(--green);
+  border-color: var(--green-deep);
+  background: rgba(159, 201, 122, 0.08);
+  cursor: default;
+}
+.audio-status[data-mode="loading"] {
+  color: var(--gold-bright);
+  border-color: var(--gold);
+  background: rgba(200, 165, 90, 0.08);
+}
+.audio-status[data-mode="off"] {
+  color: #f0c8c4;
+  border-color: #b04848;
+  background: rgba(176, 72, 72, 0.25);
+  animation: status-pulse 1.4s ease-in-out infinite;
+}
+@keyframes status-pulse {
+  50% { background: rgba(176, 72, 72, 0.5); }
+}
+
 .version {
   margin-left: 10px;
   color: var(--muted);

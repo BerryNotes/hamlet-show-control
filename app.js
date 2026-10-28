@@ -1,5 +1,5 @@
 (function () {
-  const VERSION = "v0.37.2";
+  const VERSION = "v0.38.0";
   const scenes = Array.isArray(window.SHOW_CUES) ? window.SHOW_CUES : [];
   const songs = scenes.flatMap((scene) => scene.cues);
   const audioById = new Map();
@@ -44,7 +44,8 @@
     stopAll: document.querySelector("#stopAll"),
     boostToggle: document.querySelector("#boostToggle"),
     goButton: document.querySelector("#goButton"),
-    standbyName: document.querySelector("#standbyName")
+    standbyName: document.querySelector("#standbyName"),
+    audioStatus: document.querySelector("#audioStatus")
   };
 
   state.standbyIndex = songs.length ? 0 : -1;
@@ -65,7 +66,14 @@
     if (audioCtx) return audioCtx;
     const Ctx = window.AudioContext || window.webkitAudioContext;
     if (!Ctx) return null;
-    audioCtx = new Ctx();
+    // iOS: treat the board as media playback so the silent switch and
+    // other apps' audio sessions can't mute it.
+    try { if (navigator.audioSession) navigator.audioSession.type = "playback"; } catch (error) { /* unsupported */ }
+    audioCtx = new Ctx({ latencyHint: "interactive" });
+    audioCtx.addEventListener("statechange", () => {
+      if (audioCtx && audioCtx.state !== "running") wakeAudio();
+      updateAudioStatus();
+    });
     masterGain = audioCtx.createGain();
     masterGain.gain.value = state.master;
     masterAnalyser = audioCtx.createAnalyser();
@@ -150,16 +158,12 @@
 
     load() {
       if (!this.loading) {
-        this.loading = fetch(this.src)
-          .then((res) => {
-            if (!res.ok) throw new Error(`HTTP ${res.status}`);
-            return res.arrayBuffer();
-          })
-          .then((bytes) => new Promise((resolve, reject) => audioCtx.decodeAudioData(bytes, resolve, reject)))
+        this.loading = decodeSound(this.src)
           .then((buffer) => {
-            this.buffer = trimLeadingSilence(buffer);
+            this.buffer = buffer;
             this.dispatchEvent(new Event("loadedmetadata"));
             this.dispatchEvent(new Event("durationchange"));
+            updateAudioStatus();
           })
           .catch((error) => {
             this.loading = null;
@@ -239,6 +243,24 @@
     }
   }
 
+  // Decoded AudioBuffers aren't tied to one context, so they're cached by
+  // URL and survive an engine rebuild (see rebuildAudio).
+  const decoded = new Map();
+  function decodeSound(url) {
+    if (!decoded.has(url)) {
+      const job = fetch(url)
+        .then((res) => {
+          if (!res.ok) throw new Error(`HTTP ${res.status}`);
+          return res.arrayBuffer();
+        })
+        .then((bytes) => new Promise((resolve, reject) => audioCtx.decodeAudioData(bytes, resolve, reject)))
+        .then(trimLeadingSilence);
+      job.catch(() => decoded.delete(url));
+      decoded.set(url, job);
+    }
+    return decoded.get(url);
+  }
+
   // Drop the silent lead-in most files have (MP3 encoder padding plus any
   // dead air), keeping 2 ms before the first audible sample.
   function trimLeadingSilence(buffer) {
@@ -278,6 +300,71 @@
     gain.connect(audioCtx.destination);
     source.start();
     keepAlive = source;
+  }
+
+  // Get the audio engine running from whatever state it's in. Browsers
+  // park it as "suspended" before the first tap, and iPhones leave it
+  // "interrupted" after a call, the lock screen or switching apps — any
+  // of which used to leave the board silent until a refresh.
+  function wakeAudio() {
+    if (!audioCtx) return;
+    if (audioCtx.state === "closed") {
+      rebuildAudio();
+      return;
+    }
+    if (audioCtx.state !== "running") audioCtx.resume().catch(() => {});
+  }
+
+  // Last resort when the engine won't resume: throw it away and build a
+  // fresh one. Decoded sounds come from the cache, so this is instant.
+  function rebuildAudio() {
+    songs.forEach(stopSong);
+    stopSoundById.forEach((voice) => voice.stopNode());
+    const old = audioCtx;
+    audioCtx = null;
+    keepAlive = null;
+    graphById.clear();
+    audioById.clear();
+    stopSoundById.clear();
+    if (old && old.state !== "closed") old.close().catch(() => {});
+    ensureAudioContext();
+    loadSounds();
+    startKeepAlive();
+    syncStatus();
+    updateAudioStatus();
+  }
+
+  // After a press, make sure the sound is actually coming out. If the
+  // engine still isn't running once the user has interacted with the page,
+  // rebuild it and fire the cue again.
+  function confirmPlayback(song) {
+    setTimeout(() => {
+      if (!audioCtx || audioCtx.state === "running") return;
+      const activated = !navigator.userActivation || navigator.userActivation.hasBeenActive;
+      if (!activated) return;
+      rebuildAudio();
+      playSong(song, { retry: false });
+    }, 400);
+  }
+
+  function updateAudioStatus() {
+    const el = els.audioStatus;
+    if (!el) return;
+    const loaded = songs.every((song) => {
+      const audio = audioById.get(song.id);
+      return audio && audio.readyState >= HTMLMediaElement.HAVE_ENOUGH_DATA;
+    });
+    let mode = "ready";
+    let text = "Sound ready";
+    if (!audioCtx || audioCtx.state !== "running") {
+      mode = "off";
+      text = "Tap here to turn sound on";
+    } else if (!loaded) {
+      mode = "loading";
+      text = "Loading sounds…";
+    }
+    el.dataset.mode = mode;
+    el.textContent = text;
   }
 
   function ensureGraph(song) {
@@ -462,7 +549,7 @@
 
   function prepareAudioOutput(song) {
     ensureGraph(song);
-    if (audioCtx && audioCtx.state === "suspended") audioCtx.resume();
+    wakeAudio();
     startKeepAlive();
     applyOutputVolume(song);
     startMeters();
@@ -481,7 +568,8 @@
     });
   }
 
-  async function playSong(song) {
+  async function playSong(song, { retry = true } = {}) {
+    if (audioCtx && audioCtx.state === "closed") rebuildAudio();
     const audio = getAudio(song);
     stopOtherSongs(song);
     cancelRamp(song.id);
@@ -497,10 +585,15 @@
       await audio.play();
       state.warning = "";
     } catch (error) {
+      if (retry) {
+        rebuildAudio();
+        return playSong(song, { retry: false });
+      }
       state.warning = `Could not play ${songName(song)}`;
     }
 
     syncStatus();
+    if (retry) confirmPlayback(song);
   }
 
   function stopSong(song) {
@@ -842,7 +935,7 @@
   // becomes visible again — both can be dropped while hidden.
   document.addEventListener("visibilitychange", () => {
     if (document.hidden) return;
-    if (audioCtx && audioCtx.state === "suspended") audioCtx.resume();
+    wakeAudio();
     if (state.showStarted && !wakeLock) requestWakeLock();
   });
 
@@ -850,12 +943,22 @@
   // OS audio interruptions like a phone call or notification). Phones only
   // allow audio to start on the release of the first tap, so listen for
   // that too.
-  ["pointerdown", "pointerup", "click"].forEach((type) => {
+  ["pointerdown", "pointerup", "touchend", "click", "keydown"].forEach((type) => {
     document.addEventListener(type, () => {
-      if (audioCtx && audioCtx.state === "suspended") audioCtx.resume();
+      wakeAudio();
       startKeepAlive();
     });
   });
+
+  // Coming back from the back/forward cache or another app.
+  window.addEventListener("pageshow", wakeAudio);
+  window.addEventListener("focus", wakeAudio);
+
+  if (els.audioStatus) els.audioStatus.addEventListener("click", wakeAudio);
+  setInterval(() => {
+    if (audioCtx && audioCtx.state !== "running") wakeAudio();
+    updateAudioStatus();
+  }, 1000);
 
   // Last-resort resilience: never let a stray error or rejected promise
   // tear down the running board — swallow it and keep going.
@@ -895,6 +998,7 @@
 
   renderSongs();
   loadSounds();
+  updateAudioStatus();
   syncStatus();
   updateStandbyView();
 
