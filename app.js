@@ -1,5 +1,5 @@
 (function () {
-  const VERSION = "v0.38.0";
+  const VERSION = "v0.39.0";
   const scenes = Array.isArray(window.SHOW_CUES) ? window.SHOW_CUES : [];
   const songs = scenes.flatMap((scene) => scene.cues);
   const audioById = new Map();
@@ -66,12 +66,15 @@
     if (audioCtx) return audioCtx;
     const Ctx = window.AudioContext || window.webkitAudioContext;
     if (!Ctx) return null;
-    // iOS: treat the board as media playback so the silent switch and
-    // other apps' audio sessions can't mute it.
-    try { if (navigator.audioSession) navigator.audioSession.type = "playback"; } catch (error) { /* unsupported */ }
-    audioCtx = new Ctx({ latencyHint: "interactive" });
-    audioCtx.addEventListener("statechange", () => {
-      if (audioCtx && audioCtx.state !== "running") wakeAudio();
+    try {
+      audioCtx = new Ctx({ latencyHint: "interactive" });
+    } catch (error) {
+      audioCtx = new Ctx();
+    }
+    const ctx = audioCtx;
+    ctx.addEventListener("statechange", () => {
+      if (ctx !== audioCtx) return;
+      if (ctx.state === "running") resumeTriedAt = 0;
       updateAudioStatus();
     });
     masterGain = audioCtx.createGain();
@@ -318,6 +321,12 @@
   // Last resort when the engine won't resume: throw it away and build a
   // fresh one. Decoded sounds come from the cache, so this is instant.
   function rebuildAudio() {
+    const replay = songs
+      .filter((song) => {
+        const audio = audioById.get(song.id);
+        return audio && !audio.paused && !audio.ended;
+      })
+      .map((song) => [song, audioById.get(song.id).currentTime]);
     songs.forEach(stopSong);
     stopSoundById.forEach((voice) => voice.stopNode());
     const old = audioCtx;
@@ -327,12 +336,47 @@
     audioById.clear();
     stopSoundById.clear();
     if (old && old.state !== "closed") old.close().catch(() => {});
+    resumeTriedAt = 0;
     ensureAudioContext();
     loadSounds();
     startKeepAlive();
+    replay.forEach(([song, at]) => playSong(song, { retry: false, at }));
     syncStatus();
     updateAudioStatus();
+    return replay.map(([song]) => song.id);
   }
+
+  // Unlock sound from inside a real tap/click/key press — the only place
+  // phones allow it. Resume first; if an earlier resume in a gesture
+  // didn't take, build a fresh engine right here in the gesture, which
+  // every browser accepts. A silent blip through both Web Audio and an
+  // <audio> element finishes the unlock on iPhones.
+  let resumeTriedAt = 0;
+  const unlockTone = new Audio("data:audio/wav;base64,UklGRsQAAABXQVZFZm10IBAAAAABAAEAQB8AAIA+AAACABAAZGF0YaAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA");
+  unlockTone.preload = "auto";
+  function unlockAudio(force) {
+    if (!ensureAudioContext()) return;
+    if (audioCtx.state !== "running") {
+      const now = performance.now();
+      const stuck = audioCtx.state === "closed" || (resumeTriedAt && now - resumeTriedAt > 400);
+      if (force || stuck) rebuildAudio();
+      resumeTriedAt = resumeTriedAt || now;
+      audioCtx.resume().catch(() => {});
+    }
+    try {
+      const blip = audioCtx.createBufferSource();
+      blip.buffer = audioCtx.createBuffer(1, 1, audioCtx.sampleRate);
+      blip.connect(audioCtx.destination);
+      blip.start(0);
+    } catch (error) { /* harmless */ }
+    if (!unlocked) {
+      unlocked = true;
+      unlockTone.play().catch(() => {});
+    }
+    startKeepAlive();
+    updateAudioStatus();
+  }
+  let unlocked = false;
 
   // After a press, make sure the sound is actually coming out. If the
   // engine still isn't running once the user has interacted with the page,
@@ -342,8 +386,8 @@
       if (!audioCtx || audioCtx.state === "running") return;
       const activated = !navigator.userActivation || navigator.userActivation.hasBeenActive;
       if (!activated) return;
-      rebuildAudio();
-      playSong(song, { retry: false });
+      const replayed = rebuildAudio();
+      if (!replayed.includes(song.id)) playSong(song, { retry: false });
     }, 400);
   }
 
@@ -358,7 +402,7 @@
     let text = "Sound ready";
     if (!audioCtx || audioCtx.state !== "running") {
       mode = "off";
-      text = "Tap here to turn sound on";
+      text = `Tap here to turn sound on (${audioCtx ? audioCtx.state : "no audio"})`;
     } else if (!loaded) {
       mode = "loading";
       text = "Loading sounds…";
@@ -568,13 +612,13 @@
     });
   }
 
-  async function playSong(song, { retry = true } = {}) {
+  async function playSong(song, { retry = true, at = 0 } = {}) {
     if (audioCtx && audioCtx.state === "closed") rebuildAudio();
     const audio = getAudio(song);
     stopOtherSongs(song);
     cancelRamp(song.id);
     audio.pause();
-    audio.currentTime = 0;
+    audio.currentTime = at;
     audio.loop = state.looping.has(song.id);
     setSongLevel(song, defaultSongLevel(song));
     ensureMixer(song);
@@ -586,8 +630,9 @@
       state.warning = "";
     } catch (error) {
       if (retry) {
-        rebuildAudio();
-        return playSong(song, { retry: false });
+        const replayed = rebuildAudio();
+        if (!replayed.includes(song.id)) return playSong(song, { retry: false });
+        return;
       }
       state.warning = `Could not play ${songName(song)}`;
     }
@@ -943,18 +988,21 @@
   // OS audio interruptions like a phone call or notification). Phones only
   // allow audio to start on the release of the first tap, so listen for
   // that too.
-  ["pointerdown", "pointerup", "touchend", "click", "keydown"].forEach((type) => {
-    document.addEventListener(type, () => {
-      wakeAudio();
-      startKeepAlive();
-    });
+  document.addEventListener("pointerdown", wakeAudio);
+  ["pointerup", "touchend", "click", "keydown"].forEach((type) => {
+    document.addEventListener(type, () => unlockAudio(false));
   });
 
   // Coming back from the back/forward cache or another app.
   window.addEventListener("pageshow", wakeAudio);
   window.addEventListener("focus", wakeAudio);
 
-  if (els.audioStatus) els.audioStatus.addEventListener("click", wakeAudio);
+  if (els.audioStatus) {
+    els.audioStatus.addEventListener("click", (event) => {
+      event.stopPropagation();
+      unlockAudio(audioCtx && audioCtx.state !== "running");
+    });
+  }
   setInterval(() => {
     if (audioCtx && audioCtx.state !== "running") wakeAudio();
     updateAudioStatus();

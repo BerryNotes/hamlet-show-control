@@ -51,6 +51,16 @@ window.SHOW_CUES = [
         file: "assets/audio/door-open-close.mp3",
         volume: 80,
         loop: false
+      },
+      {
+        id: "6",
+        moment: "End of show.",
+        action: "Play ending song",
+        track: "Ending Song",
+        file: "assets/audio/ending-song.mp3",
+        volume: 80,
+        loop: false,
+        song: true
       }
     ]
   }
