@@ -11,6 +11,7 @@ window.SHOW_CUES = [
         track: "Opening Song",
         file: "assets/audio/opening-song.mp3",
         volume: 80,
+        stopFade: 3,
         loop: false,
         song: true
       },
@@ -59,6 +60,7 @@ window.SHOW_CUES = [
         track: "Ending Song",
         file: "assets/audio/ending-song.mp3",
         volume: 80,
+        stopFade: 3,
         loop: false,
         song: true
       }

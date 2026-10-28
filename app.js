@@ -1,5 +1,5 @@
 (function () {
-  const VERSION = "v0.39.0";
+  const VERSION = "v0.40.0";
   const scenes = Array.isArray(window.SHOW_CUES) ? window.SHOW_CUES : [];
   const songs = scenes.flatMap((scene) => scene.cues);
   const audioById = new Map();
@@ -194,10 +194,12 @@
 
     // Ramp to silence over `seconds`, then call onDone (which stops it).
     fadeOut(seconds, onDone) {
-      this.cancelFade();
+      clearTimeout(this.fadeTimer);
       const g = this.output.gain;
       const now = audioCtx.currentTime;
-      g.setValueAtTime(g.value, now);
+      const from = g.value;
+      g.cancelScheduledValues(now);
+      g.setValueAtTime(from, now);
       g.linearRampToValueAtTime(0, now + seconds);
       this.fadeTimer = setTimeout(() => {
         this.fadeTimer = 0;
@@ -683,7 +685,8 @@
       tail.currentTime = 0;
       tail.play().catch(() => {});
     }
-    if (song.stopFade && audio && audio.fadeOut && !audio.paused) {
+    // A second Stop while it's already fading cuts it straight away.
+    if (song.stopFade && audio && audio.fadeOut && !audio.paused && !audio.fadeTimer) {
       audio.fadeOut(song.stopFade, () => {
         stopSong(song);
         syncStatus();
