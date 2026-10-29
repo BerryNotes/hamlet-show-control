@@ -322,7 +322,7 @@ h1 {
   background: var(--panel-2);
   padding: 10px 10px;
   display: grid;
-  grid-template-columns: 3fr 2fr;
+  grid-template-columns: 1fr 1fr;
   align-items: center;
   gap: 8px 10px;
   transition: border-color 180ms ease, background 180ms ease;
@@ -341,14 +341,12 @@ h1 {
 
 .song-row:hover { border-color: var(--line-strong); }
 
-.song-row.is-standby {
-  border-color: var(--gold);
-  box-shadow: 0 0 0 1px var(--gold) inset, 0 0 12px rgba(200, 165, 90, 0.25);
-}
-
-.song-row.is-standby::before {
-  background: var(--gold);
-  box-shadow: 0 0 8px rgba(200, 165, 90, 0.6);
+.song-row,
+.song-row button {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .song-row.just-fired::after {
