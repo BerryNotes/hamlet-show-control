@@ -1,5 +1,5 @@
 (function () {
-  const VERSION = "v0.45.1";
+  const VERSION = "v0.46.0";
   const scenes = Array.isArray(window.SHOW_CUES) ? window.SHOW_CUES : [];
   const songs = scenes.flatMap((scene) => scene.cues);
   const audioById = new Map();
@@ -782,7 +782,7 @@
     if (!stopSoundById.has(song.id)) {
       const voice = new BufferVoice(song.stopSound);
       const gain = audioCtx.createGain();
-      gain.gain.value = defaultSongLevel(song);
+      gain.gain.value = (song.stopSoundVolume ?? song.volume ?? 80) / 100;
       voice.panner = createPanner(song);
       voice.output.connect(gain);
       if (voice.panner) {

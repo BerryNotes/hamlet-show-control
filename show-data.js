@@ -30,7 +30,8 @@ window.SHOW_CUES = [
         action: "Play phone",
         track: "Phone",
         file: "assets/audio/phone.mp3",
-        volume: 80,
+        volume: 63.5, // 80 minus 2 dB
+        stopSoundVolume: 80,
         stopFade: 0.02,
         stopSound: "assets/audio/phone-end.mp3",
         loop: false

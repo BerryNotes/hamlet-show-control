@@ -286,7 +286,7 @@ h1 {
 
 .song-list {
   display: grid;
-  gap: 8px;
+  gap: 6px;
   overflow-y: auto;
   padding-right: 4px;
   overscroll-behavior: contain;
@@ -320,11 +320,11 @@ h1 {
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);
   background: var(--panel-2);
-  padding: 10px 10px;
+  padding: 6px 8px;
   display: grid;
   grid-template-columns: 1fr 1fr;
   align-items: center;
-  gap: 8px 10px;
+  gap: 5px 8px;
   transition: border-color 180ms ease, background 180ms ease;
   position: relative;
 }
@@ -389,7 +389,7 @@ h1 {
 
 .play-button {
   min-width: 0;
-  min-height: 56px;
+  min-height: 44px;
   padding: 0 10px;
   border-color: #4a6e34;
   background: linear-gradient(180deg, #a8d381, #7fb058);
@@ -402,7 +402,7 @@ h1 {
 .play-button:hover { background: linear-gradient(180deg, #b8e08c, #8fc063); border-color: #5a8042; }
 
 .stop-button {
-  min-height: 56px;
+  min-height: 44px;
   font-size: 1.05rem;
   font-weight: 800;
   letter-spacing: 0.06em;
@@ -606,62 +606,62 @@ body.is-playing .live-dot {
 .pan {
   display: grid;
   justify-items: center;
-  gap: 4px;
-  padding: 2px 0 4px;
+  gap: 5px;
+  padding: 6px 0 8px;
   border-bottom: 1px solid var(--metal-3);
+}
+
+.pan-label {
+  font-family: "Inter", monospace;
+  font-weight: 800;
+  font-size: 0.62rem;
+  letter-spacing: 0.24em;
+  color: var(--gold-bright);
 }
 
 .pan-knob {
   --angle: 0deg;
   position: relative;
-  width: 40px;
-  height: 40px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
-  background:
-    radial-gradient(circle at 35% 30%, #5a564c 0%, #2a2822 55%, #121110 100%);
-  border: 1px solid #000;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.6), 0 1px 0 rgba(255,255,255,0.12) inset;
+  background: radial-gradient(circle at 35% 30%, #fff8e4 0%, #e2d4ae 45%, #a8986c 100%);
+  border: 2px solid var(--gold);
+  box-shadow: 0 0 0 3px rgba(200, 165, 90, 0.25), 0 3px 6px rgba(0,0,0,0.7);
   cursor: grab;
   touch-action: none;
   -webkit-user-select: none;
   user-select: none;
   -webkit-tap-highlight-color: transparent;
 }
-.pan-knob::before {
-  /* arc ticks behind the knob: L, centre, R */
-  content: "";
-  position: absolute;
-  inset: -5px;
-  border-radius: 50%;
-  background:
-    conic-gradient(from 225deg, var(--gold) 0 2deg, transparent 2deg 133deg, var(--gold) 133deg 137deg, transparent 137deg 268deg, var(--gold) 268deg 270deg, transparent 270deg);
-  -webkit-mask: radial-gradient(circle, transparent 23px, #000 24px);
-  mask: radial-gradient(circle, transparent 23px, #000 24px);
-  opacity: 0.7;
-  pointer-events: none;
-}
 .pan-knob:active { cursor: grabbing; }
-.pan-knob:focus-visible { outline: 2px solid var(--gold); outline-offset: 4px; }
+.pan-knob:focus-visible { outline: 2px solid var(--gold-bright); outline-offset: 4px; }
 
 .pan-pointer {
   position: absolute;
   left: 50%;
   top: 4px;
-  width: 3px;
-  height: 14px;
-  margin-left: -1.5px;
+  width: 4px;
+  height: 18px;
+  margin-left: -2px;
   border-radius: 2px;
-  background: var(--gold-bright);
-  transform-origin: 50% 16px;
+  background: #1f1a10;
+  transform-origin: 50% 20px;
   transform: rotate(var(--angle));
 }
 
 .pan-readout {
+  min-width: 44px;
+  padding: 2px 6px;
+  border: 1px solid #000;
+  border-radius: 3px;
+  background: linear-gradient(180deg, #050908, #0d1310);
+  color: var(--led-green);
   font-family: "Inter", monospace;
   font-weight: 800;
-  font-size: 0.6rem;
-  letter-spacing: 0.14em;
-  color: var(--text-dim);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-align: center;
   font-variant-numeric: tabular-nums;
 }
 
@@ -1004,7 +1004,7 @@ body.is-playing .live-dot {
   .mixer-board { padding: 14px; }
   .cue-panel { padding: 12px; }
   .song-list { max-height: none; }
-  .play-button, .stop-button { min-height: 72px; font-size: 1.2rem; }
+  .play-button, .stop-button { min-height: 50px; font-size: 1.1rem; }
 }
 
 /* ─── reduce motion ─────────────────────────────────────────────────── */
