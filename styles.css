@@ -598,8 +598,8 @@ body.is-playing .live-dot {
 }
 
 /* scribble strip (label tape) */
-.channel-strip:not(.master-strip) {
-  grid-template-rows: auto auto auto 1fr auto auto auto auto;
+.channel-strip.master-strip {
+  grid-template-rows: auto auto auto 1fr auto auto auto;
 }
 
 /* pan knob */

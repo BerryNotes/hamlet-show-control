@@ -1,5 +1,5 @@
 (function () {
-  const VERSION = "v0.46.0";
+  const VERSION = "v0.47.0";
   const scenes = Array.isArray(window.SHOW_CUES) ? window.SHOW_CUES : [];
   const songs = scenes.flatMap((scene) => scene.cues);
   const audioById = new Map();
@@ -11,25 +11,26 @@
     warning: "",
     looping: new Set(),
     levels: new Map(),
-    pans: loadPans(),
+    pan: loadPan(),
     ramps: new Map(),
     boost: true,
     showStarted: false
   };
 
-  // Pan per cue (-1 = left, 0 = centre, 1 = right), remembered on this
-  // device so a pan set in rehearsal is still there for the show.
-  function loadPans() {
+  // Master pan for everything (-1 = left, 0 = centre, 1 = right),
+  // remembered on this device so a pan set in rehearsal is there for the show.
+  function loadPan() {
     try {
-      return new Map(Object.entries(JSON.parse(localStorage.getItem("soundboard.pans") || "{}")));
+      const saved = Number(localStorage.getItem("soundboard.pan"));
+      return Number.isFinite(saved) ? Math.min(1, Math.max(-1, saved)) : 0;
     } catch (error) {
-      return new Map();
+      return 0;
     }
   }
 
-  function savePans() {
+  function savePan() {
     try {
-      localStorage.setItem("soundboard.pans", JSON.stringify(Object.fromEntries(state.pans)));
+      localStorage.setItem("soundboard.pan", String(state.pan));
     } catch (error) { /* private mode etc. — pan just isn't remembered */ }
   }
 
@@ -41,6 +42,7 @@
   let masterMeterLevel = 0;
   let masterComp = null;
   let masterMakeup = null;
+  let masterPanner = null;
   const graphById = new Map();
   let meterRaf = 0;
   let wakeLock = null;
@@ -60,7 +62,9 @@
     masterMeterR: document.querySelector("#masterMeterR"),
     stopAll: document.querySelector("#stopAll"),
     boostToggle: document.querySelector("#boostToggle"),
-    audioStatus: document.querySelector("#audioStatus")
+    audioStatus: document.querySelector("#audioStatus"),
+    masterPan: document.querySelector("#masterPan"),
+    masterPanReadout: document.querySelector("#masterPanReadout")
   };
 
 
@@ -105,7 +109,17 @@
     masterComp.release.value = 0.25;
     masterMakeup = audioCtx.createGain();
 
-    masterGain.connect(masterComp);
+    // Master pan sits right after the master fader, so it moves every
+    // sound (and the phone-end tail) together.
+    if (audioCtx.createStereoPanner) {
+      masterPanner = audioCtx.createStereoPanner();
+      masterPanner.pan.value = state.pan;
+      masterGain.connect(masterPanner);
+      masterPanner.connect(masterComp);
+    } else {
+      masterPanner = null;
+      masterGain.connect(masterComp);
+    }
     masterComp.connect(masterMakeup);
     masterMakeup.connect(masterAnalyser);
     masterAnalyser.connect(audioCtx.destination);
@@ -468,80 +482,61 @@
 
     const gain = audioCtx.createGain();
     gain.gain.value = songLevel(song);
-    const panner = createPanner(song);
     const analyser = audioCtx.createAnalyser();
     analyser.fftSize = 512;
     const data = new Uint8Array(analyser.fftSize);
 
     source.connect(gain);
-    if (panner) {
-      gain.connect(panner);
-      panner.connect(analyser);
-    } else {
-      gain.connect(analyser);
-    }
+    gain.connect(analyser);
     analyser.connect(masterGain);
 
     audio.volume = 1;
-    const graph = { source, gain, panner, analyser, data, level: 0 };
+    const graph = { source, gain, analyser, data, level: 0 };
     graphById.set(song.id, graph);
     return graph;
   }
 
-  function songPan(song) {
-    return state.pans.get(song.id) ?? song.pan ?? 0;
-  }
-
-  function createPanner(song) {
-    if (!audioCtx.createStereoPanner) return null;
-    const panner = audioCtx.createStereoPanner();
-    panner.pan.value = songPan(song);
-    return panner;
-  }
-
-  function setSongPan(song, value) {
+  function setMasterPan(value) {
     const pan = Math.round(Math.min(1, Math.max(-1, value)) * 100) / 100;
-    state.pans.set(song.id, pan);
-    savePans();
-    const now = audioCtx ? audioCtx.currentTime : 0;
-    const graph = graphById.get(song.id);
-    if (graph && graph.panner) graph.panner.pan.setTargetAtTime(pan, now, 0.01);
-    const tail = stopSoundById.get(song.id);
-    if (tail && tail.panner) tail.panner.pan.setTargetAtTime(pan, now, 0.01);
-    const strip = mixerById.get(song.id);
-    if (strip) renderPan(strip, pan);
+    state.pan = pan;
+    savePan();
+    if (masterPanner) masterPanner.pan.setTargetAtTime(pan, audioCtx.currentTime, 0.01);
+    renderPan();
   }
 
-  function renderPan(strip, pan) {
-    const knob = strip.querySelector(".pan-knob");
+  function renderPan() {
+    const knob = els.masterPan;
+    if (!knob) return;
+    const pan = state.pan;
     knob.style.setProperty("--angle", `${pan * 135}deg`);
     knob.setAttribute("aria-valuenow", String(Math.round(pan * 100)));
     const amount = Math.round(Math.abs(pan) * 100);
-    strip.querySelector(".pan-readout").textContent = amount === 0 ? "C" : `${pan < 0 ? "L" : "R"} ${amount}`;
+    els.masterPanReadout.textContent = amount === 0 ? "C" : `${pan < 0 ? "L" : "R"} ${amount}`;
   }
 
   // Rotary pan knob: drag up/right to pan right, down/left to pan left;
   // double-tap (or double-click) to centre; arrow keys nudge it.
-  function wirePanKnob(strip, song) {
-    const knob = strip.querySelector(".pan-knob");
+  function wirePanKnob() {
+    const knob = els.masterPan;
+    if (!knob) return;
     let drag = null;
     let lastTap = 0;
     knob.addEventListener("pointerdown", (event) => {
       event.preventDefault();
       const now = performance.now();
       if (now - lastTap < 320) {
-        setSongPan(song, 0);
+        setMasterPan(0);
         lastTap = 0;
         return;
       }
       lastTap = now;
-      drag = { x: event.clientX, y: event.clientY, start: songPan(song) };
+      drag = { x: event.clientX, y: event.clientY, start: state.pan };
       knob.setPointerCapture(event.pointerId);
     });
     knob.addEventListener("pointermove", (event) => {
       if (!drag) return;
       const moved = (event.clientX - drag.x) - (event.clientY - drag.y);
-      setSongPan(song, drag.start + moved / 120);
+      setMasterPan(drag.start + moved / 120);
     });
     const end = () => { drag = null; };
     knob.addEventListener("pointerup", end);
@@ -550,13 +545,13 @@
       const step = { ArrowLeft: -0.1, ArrowDown: -0.1, ArrowRight: 0.1, ArrowUp: 0.1 }[event.key];
       if (step) {
         event.preventDefault();
-        setSongPan(song, songPan(song) + step);
+        setMasterPan(state.pan + step);
       } else if (event.key === "Home" || event.key === "0") {
         event.preventDefault();
-        setSongPan(song, 0);
+        setMasterPan(0);
       }
     });
-    renderPan(strip, songPan(song));
+    renderPan();
   }
 
   function applyOutputVolume(song) {
@@ -783,14 +778,8 @@
       const voice = new BufferVoice(song.stopSound);
       const gain = audioCtx.createGain();
       gain.gain.value = (song.stopSoundVolume ?? song.volume ?? 80) / 100;
-      voice.panner = createPanner(song);
       voice.output.connect(gain);
-      if (voice.panner) {
-        gain.connect(voice.panner);
-        voice.panner.connect(masterGain);
-      } else {
-        gain.connect(masterGain);
-      }
+      gain.connect(masterGain);
       voice.load().catch(() => {});
       stopSoundById.set(song.id, voice);
     }
@@ -881,7 +870,6 @@
     });
 
     strip.querySelector(".strip-stop").addEventListener("click", () => stopButton(song));
-    wirePanKnob(strip, song);
 
     mixerById.set(song.id, strip);
     els.mixerList.append(fragment);
@@ -1033,6 +1021,7 @@
   }
 
   els.master.addEventListener("input", applyMaster);
+  wirePanKnob();
   applyMaster();
 
   els.stopAll.addEventListener("click", stopAll);
