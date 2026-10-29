@@ -1,5 +1,5 @@
 (function () {
-  const VERSION = "v0.44.3";
+  const VERSION = "v0.45.0";
   const scenes = Array.isArray(window.SHOW_CUES) ? window.SHOW_CUES : [];
   const songs = scenes.flatMap((scene) => scene.cues);
   const audioById = new Map();
@@ -11,10 +11,27 @@
     warning: "",
     looping: new Set(),
     levels: new Map(),
+    pans: loadPans(),
     ramps: new Map(),
     boost: true,
     showStarted: false
   };
+
+  // Pan per cue (-1 = left, 0 = centre, 1 = right), remembered on this
+  // device so a pan set in rehearsal is still there for the show.
+  function loadPans() {
+    try {
+      return new Map(Object.entries(JSON.parse(localStorage.getItem("soundboard.pans") || "{}")));
+    } catch (error) {
+      return new Map();
+    }
+  }
+
+  function savePans() {
+    try {
+      localStorage.setItem("soundboard.pans", JSON.stringify(Object.fromEntries(state.pans)));
+    } catch (error) { /* private mode etc. — pan just isn't remembered */ }
+  }
 
   // Web Audio analysis graph (built lazily on first play)
   let audioCtx = null;
@@ -448,18 +465,95 @@
 
     const gain = audioCtx.createGain();
     gain.gain.value = songLevel(song);
+    const panner = createPanner(song);
     const analyser = audioCtx.createAnalyser();
     analyser.fftSize = 512;
     const data = new Uint8Array(analyser.fftSize);
 
     source.connect(gain);
-    gain.connect(analyser);
+    if (panner) {
+      gain.connect(panner);
+      panner.connect(analyser);
+    } else {
+      gain.connect(analyser);
+    }
     analyser.connect(masterGain);
 
     audio.volume = 1;
-    const graph = { source, gain, analyser, data, level: 0 };
+    const graph = { source, gain, panner, analyser, data, level: 0 };
     graphById.set(song.id, graph);
     return graph;
+  }
+
+  function songPan(song) {
+    return state.pans.get(song.id) ?? song.pan ?? 0;
+  }
+
+  function createPanner(song) {
+    if (!audioCtx.createStereoPanner) return null;
+    const panner = audioCtx.createStereoPanner();
+    panner.pan.value = songPan(song);
+    return panner;
+  }
+
+  function setSongPan(song, value) {
+    const pan = Math.round(Math.min(1, Math.max(-1, value)) * 100) / 100;
+    state.pans.set(song.id, pan);
+    savePans();
+    const now = audioCtx ? audioCtx.currentTime : 0;
+    const graph = graphById.get(song.id);
+    if (graph && graph.panner) graph.panner.pan.setTargetAtTime(pan, now, 0.01);
+    const tail = stopSoundById.get(song.id);
+    if (tail && tail.panner) tail.panner.pan.setTargetAtTime(pan, now, 0.01);
+    const strip = mixerById.get(song.id);
+    if (strip) renderPan(strip, pan);
+  }
+
+  function renderPan(strip, pan) {
+    const knob = strip.querySelector(".pan-knob");
+    knob.style.setProperty("--angle", `${pan * 135}deg`);
+    knob.setAttribute("aria-valuenow", String(Math.round(pan * 100)));
+    const amount = Math.round(Math.abs(pan) * 100);
+    strip.querySelector(".pan-readout").textContent = amount === 0 ? "C" : `${pan < 0 ? "L" : "R"} ${amount}`;
+  }
+
+  // Rotary pan knob: drag up/right to pan right, down/left to pan left;
+  // double-tap (or double-click) to centre; arrow keys nudge it.
+  function wirePanKnob(strip, song) {
+    const knob = strip.querySelector(".pan-knob");
+    let drag = null;
+    let lastTap = 0;
+    knob.addEventListener("pointerdown", (event) => {
+      event.preventDefault();
+      const now = performance.now();
+      if (now - lastTap < 320) {
+        setSongPan(song, 0);
+        lastTap = 0;
+        return;
+      }
+      lastTap = now;
+      drag = { x: event.clientX, y: event.clientY, start: songPan(song) };
+      knob.setPointerCapture(event.pointerId);
+    });
+    knob.addEventListener("pointermove", (event) => {
+      if (!drag) return;
+      const moved = (event.clientX - drag.x) - (event.clientY - drag.y);
+      setSongPan(song, drag.start + moved / 120);
+    });
+    const end = () => { drag = null; };
+    knob.addEventListener("pointerup", end);
+    knob.addEventListener("pointercancel", end);
+    knob.addEventListener("keydown", (event) => {
+      const step = { ArrowLeft: -0.1, ArrowDown: -0.1, ArrowRight: 0.1, ArrowUp: 0.1 }[event.key];
+      if (step) {
+        event.preventDefault();
+        setSongPan(song, songPan(song) + step);
+      } else if (event.key === "Home" || event.key === "0") {
+        event.preventDefault();
+        setSongPan(song, 0);
+      }
+    });
+    renderPan(strip, songPan(song));
   }
 
   function applyOutputVolume(song) {
@@ -685,8 +779,14 @@
       const voice = new BufferVoice(song.stopSound);
       const gain = audioCtx.createGain();
       gain.gain.value = defaultSongLevel(song);
+      voice.panner = createPanner(song);
       voice.output.connect(gain);
-      gain.connect(masterGain);
+      if (voice.panner) {
+        gain.connect(voice.panner);
+        voice.panner.connect(masterGain);
+      } else {
+        gain.connect(masterGain);
+      }
       voice.load().catch(() => {});
       stopSoundById.set(song.id, voice);
     }
@@ -694,12 +794,12 @@
   }
 
   // The Stop buttons: cues with `stopFade` (seconds) ramp out instead of
-  // cutting, and cues with `stopSound` play their tail on every press —
-  // started in the same instant so the hand-off is seamless.
-  // STOP ALL / Esc stay instant and silent.
+  // cutting, and cues with `stopSound` play their tail — only when the cue
+  // is actually playing, started in the same instant so the hand-off is
+  // seamless. STOP ALL / Esc stay instant and silent.
   function stopButton(song) {
     const audio = audioById.get(song.id);
-    const tail = getStopSound(song);
+    const tail = audio && !audio.paused && !audio.ended ? getStopSound(song) : null;
     if (tail) {
       tail.pause();
       tail.currentTime = 0;
@@ -769,6 +869,7 @@
     });
 
     strip.querySelector(".strip-stop").addEventListener("click", () => stopButton(song));
+    wirePanKnob(strip, song);
 
     mixerById.set(song.id, strip);
     els.mixerList.append(fragment);

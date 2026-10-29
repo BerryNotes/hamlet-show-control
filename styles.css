@@ -585,6 +585,73 @@ body.is-playing .live-dot {
 }
 
 /* scribble strip (label tape) */
+.channel-strip:not(.master-strip) {
+  grid-template-rows: auto auto auto 1fr auto auto auto auto;
+}
+
+/* pan knob */
+.pan {
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  padding: 2px 0 4px;
+  border-bottom: 1px solid var(--metal-3);
+}
+
+.pan-knob {
+  --angle: 0deg;
+  position: relative;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at 35% 30%, #5a564c 0%, #2a2822 55%, #121110 100%);
+  border: 1px solid #000;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.6), 0 1px 0 rgba(255,255,255,0.12) inset;
+  cursor: grab;
+  touch-action: none;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+.pan-knob::before {
+  /* arc ticks behind the knob: L, centre, R */
+  content: "";
+  position: absolute;
+  inset: -5px;
+  border-radius: 50%;
+  background:
+    conic-gradient(from 225deg, var(--gold) 0 2deg, transparent 2deg 133deg, var(--gold) 133deg 137deg, transparent 137deg 268deg, var(--gold) 268deg 270deg, transparent 270deg);
+  -webkit-mask: radial-gradient(circle, transparent 23px, #000 24px);
+  mask: radial-gradient(circle, transparent 23px, #000 24px);
+  opacity: 0.7;
+  pointer-events: none;
+}
+.pan-knob:active { cursor: grabbing; }
+.pan-knob:focus-visible { outline: 2px solid var(--gold); outline-offset: 4px; }
+
+.pan-pointer {
+  position: absolute;
+  left: 50%;
+  top: 4px;
+  width: 3px;
+  height: 14px;
+  margin-left: -1.5px;
+  border-radius: 2px;
+  background: var(--gold-bright);
+  transform-origin: 50% 16px;
+  transform: rotate(var(--angle));
+}
+
+.pan-readout {
+  font-family: "Inter", monospace;
+  font-weight: 800;
+  font-size: 0.6rem;
+  letter-spacing: 0.14em;
+  color: var(--text-dim);
+  font-variant-numeric: tabular-nums;
+}
+
 .scribble {
   background: linear-gradient(180deg, var(--scribble), #d8cba8);
   color: #2a2418;
