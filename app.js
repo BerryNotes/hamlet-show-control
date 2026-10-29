@@ -1,5 +1,5 @@
 (function () {
-  const VERSION = "v0.42.0";
+  const VERSION = "v0.43.0";
   const scenes = Array.isArray(window.SHOW_CUES) ? window.SHOW_CUES : [];
   const songs = scenes.flatMap((scene) => scene.cues);
   const audioById = new Map();
@@ -363,6 +363,15 @@
   sessionTrack.loop = true;
   sessionTrack.preload = "auto";
   sessionTrack.setAttribute("playsinline", "");
+  // iOS pauses this track for a phone call (or another app taking the
+  // audio) and never restarts it; the status light turns red so one tap
+  // brings it back.
+  let sessionTrackStarted = false;
+  sessionTrack.addEventListener("playing", () => {
+    sessionTrackStarted = true;
+    updateAudioStatus();
+  });
+  sessionTrack.addEventListener("pause", () => updateAudioStatus());
   if ("mediaSession" in navigator && window.MediaMetadata) {
     navigator.mediaSession.metadata = new MediaMetadata({ title: "Sound Board", artist: "Show Control" });
   }
@@ -408,9 +417,17 @@
     });
     let mode = "ready";
     let text = "Sound ready";
+    const reasons = {
+      suspended: "sound is paused",
+      interrupted: "interrupted by a call or another app",
+      closed: "sound engine stopped"
+    };
     if (!audioCtx || audioCtx.state !== "running") {
       mode = "off";
-      text = `Tap here to turn sound on (${audioCtx ? audioCtx.state : "no audio"})`;
+      text = `Tap here to turn sound on (${audioCtx ? reasons[audioCtx.state] || audioCtx.state : "no audio"})`;
+    } else if (sessionTrackStarted && sessionTrack.paused) {
+      mode = "off";
+      text = "Tap here to turn sound back on (paused by a call or another app)";
     } else if (!loaded) {
       mode = "loading";
       text = "Loading sounds…";
