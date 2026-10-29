@@ -322,7 +322,7 @@ h1 {
   background: var(--panel-2);
   padding: 10px 10px;
   display: grid;
-  grid-template-columns: 1fr 88px;
+  grid-template-columns: 3fr 2fr;
   align-items: center;
   gap: 8px 10px;
   transition: border-color 180ms ease, background 180ms ease;
@@ -397,7 +397,7 @@ h1 {
   background: linear-gradient(180deg, #a8d381, #7fb058);
   color: #0f1a08;
   font-weight: 800;
-  font-size: 1.2rem;
+  font-size: 1.05rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }
@@ -405,8 +405,8 @@ h1 {
 
 .stop-button {
   min-height: 56px;
-  font-size: 0.75rem;
-  font-weight: 700;
+  font-size: 1.05rem;
+  font-weight: 800;
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
@@ -926,9 +926,7 @@ body.is-playing .live-dot {
   .mixer-board { padding: 14px; }
   .cue-panel { padding: 12px; }
   .song-list { max-height: none; }
-  .song-row { grid-template-columns: 1fr 76px; }
-  .play-button, .stop-button { min-height: 72px; }
-  .play-button { font-size: 1.4rem; }
+  .play-button, .stop-button { min-height: 72px; font-size: 1.2rem; }
 }
 
 /* ─── reduce motion ─────────────────────────────────────────────────── */
