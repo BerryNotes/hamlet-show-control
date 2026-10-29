@@ -1,5 +1,5 @@
 (function () {
-  const VERSION = "v0.45.0";
+  const VERSION = "v0.45.1";
   const scenes = Array.isArray(window.SHOW_CUES) ? window.SHOW_CUES : [];
   const songs = scenes.flatMap((scene) => scene.cues);
   const audioById = new Map();
@@ -214,7 +214,10 @@
       const from = g.value;
       g.cancelScheduledValues(now);
       g.setValueAtTime(from, now);
-      g.linearRampToValueAtTime(0, now + seconds);
+      // Exponential decay rather than a straight line: a linear ramp barely
+      // dips for the first second, so a Stop press sounded ignored. This
+      // is clearly quieter within a fifth of the fade.
+      g.setTargetAtTime(0, now, seconds / 5);
       this.fadeTimer = setTimeout(() => {
         this.fadeTimer = 0;
         onDone();
@@ -340,7 +343,7 @@
     const replay = songs
       .filter((song) => {
         const audio = audioById.get(song.id);
-        return audio && !audio.paused && !audio.ended;
+        return audio && !audio.paused && !audio.ended && !audio.fadeTimer;
       })
       .map((song) => [song, audioById.get(song.id).currentTime]);
     songs.forEach(stopSong);
@@ -762,6 +765,7 @@
     if (!audio) return;
     cancelRamp(song.id);
     if (audio.cancelFade) audio.cancelFade();
+    showFading(song, false);
     audio.pause();
     audio.currentTime = 0;
     state.levels.delete(song.id);
@@ -807,6 +811,7 @@
     }
     // A second Stop while it's already fading cuts it straight away.
     if (song.stopFade && audio && audio.fadeOut && !audio.paused && !audio.fadeTimer) {
+      showFading(song, true);
       audio.fadeOut(song.stopFade, () => {
         stopSong(song);
         syncStatus();
@@ -815,6 +820,13 @@
     }
     stopSong(song);
     syncStatus();
+  }
+
+  // While a Stop is fading a song out, its Stop buttons read FADING
+  // (press again to cut it).
+  function showFading(song, fading) {
+    rowById.get(song.id)?.classList.toggle("is-fading", fading);
+    mixerById.get(song.id)?.classList.toggle("is-fading", fading);
   }
 
   function stopAll() {
